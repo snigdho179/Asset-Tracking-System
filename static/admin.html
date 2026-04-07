@@ -1,0 +1,1735 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Asset Tracking System — Admin Panel</title>
+    <meta name="description" content="Secure admin dashboard for asset ingestion, QR generation, and credential management." />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+    <style>
+      /* ═══════════════════════════════════════════════════════════════
+         DESIGN SYSTEM — CSS Custom Properties
+         ═══════════════════════════════════════════════════════════════ */
+      :root {
+        /* Primary Blue Palette */
+        --blue-50: #eff6ff;
+        --blue-100: #dbeafe;
+        --blue-200: #bfdbfe;
+        --blue-300: #93c5fd;
+        --blue-400: #60a5fa;
+        --blue-500: #3b82f6;
+        --blue-600: #2563eb;
+        --blue-700: #1d4ed8;
+        --blue-800: #1e40af;
+        --blue-900: #1e3a8a;
+
+        /* Neutral Slate */
+        --slate-50: #f8fafc;
+        --slate-100: #f1f5f9;
+        --slate-200: #e2e8f0;
+        --slate-300: #cbd5e1;
+        --slate-400: #94a3b8;
+        --slate-500: #64748b;
+        --slate-600: #475569;
+        --slate-700: #334155;
+        --slate-800: #1e293b;
+        --slate-900: #0f172a;
+
+        /* Feedback Colors */
+        --emerald-50: #ecfdf5;
+        --emerald-100: #d1fae5;
+        --emerald-500: #10b981;
+        --emerald-600: #059669;
+        --emerald-700: #047857;
+        --rose-50: #fff1f2;
+        --rose-100: #ffe4e6;
+        --rose-500: #f43f5e;
+        --rose-600: #e11d48;
+        --rose-700: #be123c;
+        --amber-50: #fffbeb;
+        --amber-100: #fef3c7;
+        --amber-500: #f59e0b;
+        --amber-600: #d97706;
+        --sky-50: #f0f9ff;
+        --sky-100: #e0f2fe;
+        --sky-600: #0284c7;
+        --sky-700: #0369a1;
+
+        /* Surfaces */
+        --bg-body: var(--slate-50);
+        --bg-card: #ffffff;
+        --bg-sidebar: #ffffff;
+        --bg-input: #ffffff;
+        --border-color: var(--slate-200);
+        --border-light: var(--slate-100);
+
+        /* Typography */
+        --text-primary: var(--slate-900);
+        --text-secondary: var(--slate-600);
+        --text-tertiary: var(--slate-400);
+        --text-on-primary: #ffffff;
+
+        /* Shadows */
+        --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+        --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.06), 0 2px 4px -2px rgba(0,0,0,0.06);
+        --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.07), 0 4px 6px -4px rgba(0,0,0,0.07);
+        --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.08), 0 8px 10px -6px rgba(0,0,0,0.06);
+        --shadow-glow: 0 0 20px rgba(59,130,246,0.15);
+
+        /* Radii */
+        --radius-sm: 8px;
+        --radius-md: 12px;
+        --radius-lg: 16px;
+        --radius-xl: 20px;
+        --radius-full: 9999px;
+
+        /* Transitions */
+        --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+        --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+        --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
+
+        /* Layout */
+        --sidebar-width: 260px;
+        --header-height: 64px;
+        --mobile-nav-height: 86px;
+      }
+
+      /* ═══════════════════════════════════════════════════════════════
+         RESET & BASE
+         ═══════════════════════════════════════════════════════════════ */
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+      body {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        background: var(--bg-body);
+        color: var(--text-primary);
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        overflow-x: hidden;
+      }
+
+      .mono { font-family: 'IBM Plex Mono', monospace; }
+
+      input, button, select, textarea { font-family: inherit; }
+
+      /* ═══════════════════════════════════════════════════════════════
+         LOGIN SCREEN
+         ═══════════════════════════════════════════════════════════════ */
+      #login-screen {
+        position: fixed;
+        inset: 0;
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, var(--blue-600) 0%, var(--blue-800) 50%, var(--slate-900) 100%);
+        transition: opacity var(--transition-slow), visibility var(--transition-slow);
+      }
+
+      #login-screen.hidden {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+      }
+
+      .login-bg-pattern {
+        position: absolute;
+        inset: 0;
+        background-image:
+          radial-gradient(circle at 20% 50%, rgba(255,255,255,0.05) 0%, transparent 50%),
+          radial-gradient(circle at 80% 20%, rgba(255,255,255,0.03) 0%, transparent 40%),
+          radial-gradient(circle at 50% 80%, rgba(59,130,246,0.08) 0%, transparent 50%);
+        pointer-events: none;
+      }
+
+      .login-card {
+        position: relative;
+        width: 100%;
+        max-width: 420px;
+        margin: 0 20px;
+        background: rgba(255,255,255,0.97);
+        backdrop-filter: blur(20px);
+        border-radius: var(--radius-xl);
+        padding: 48px 40px;
+        box-shadow: var(--shadow-xl), 0 0 60px rgba(0,0,0,0.15);
+        animation: loginSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      @keyframes loginSlideUp {
+        from { opacity: 0; transform: translateY(30px) scale(0.96); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+      }
+
+      .login-logo {
+        width: 56px;
+        height: 56px;
+        background: linear-gradient(135deg, var(--blue-500), var(--blue-700));
+        border-radius: var(--radius-md);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 24px;
+        box-shadow: 0 4px 12px rgba(37,99,235,0.3);
+      }
+
+      .login-logo svg { color: white; }
+
+      .login-title {
+        text-align: center;
+        font-size: 24px;
+        font-weight: 800;
+        color: var(--text-primary);
+        letter-spacing: -0.02em;
+      }
+
+      .login-subtitle {
+        text-align: center;
+        font-size: 14px;
+        color: var(--text-secondary);
+        margin-top: 8px;
+        margin-bottom: 32px;
+      }
+
+      .form-group { margin-bottom: 20px; }
+
+      .form-label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 6px;
+        letter-spacing: 0.01em;
+      }
+
+      .form-input {
+        width: 100%;
+        padding: 12px 16px;
+        background: var(--bg-input);
+        border: 1.5px solid var(--border-color);
+        border-radius: var(--radius-sm);
+        font-size: 14px;
+        color: var(--text-primary);
+        outline: none;
+        transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+      }
+
+      .form-input::placeholder { color: var(--text-tertiary); }
+
+      .form-input:focus {
+        border-color: var(--blue-500);
+        box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
+      }
+
+      .form-input-wrapper {
+        position: relative;
+      }
+
+      .form-input-icon {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-tertiary);
+        pointer-events: none;
+      }
+
+      .form-input-icon + .form-input { padding-left: 42px; }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 12px 20px;
+        font-size: 14px;
+        font-weight: 600;
+        border-radius: var(--radius-sm);
+        border: 1.5px solid transparent;
+        cursor: pointer;
+        transition: all var(--transition-fast);
+        text-decoration: none;
+        line-height: 1;
+        white-space: nowrap;
+      }
+
+      .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, var(--blue-500), var(--blue-600));
+        color: var(--text-on-primary);
+        border-color: var(--blue-600);
+        box-shadow: 0 2px 8px rgba(37,99,235,0.25);
+      }
+
+      .btn-primary:hover:not(:disabled) {
+        background: linear-gradient(135deg, var(--blue-600), var(--blue-700));
+        box-shadow: 0 4px 12px rgba(37,99,235,0.35);
+        transform: translateY(-1px);
+      }
+
+      .btn-primary:active:not(:disabled) { transform: translateY(0); }
+
+      .btn-secondary {
+        background: var(--bg-card);
+        color: var(--text-primary);
+        border-color: var(--border-color);
+      }
+
+      .btn-secondary:hover:not(:disabled) {
+        background: var(--slate-50);
+        border-color: var(--slate-300);
+      }
+
+      .btn-ghost {
+        background: transparent;
+        color: var(--text-secondary);
+        border-color: transparent;
+        padding: 8px 12px;
+      }
+
+      .btn-ghost:hover { background: var(--slate-100); color: var(--text-primary); }
+
+      .btn-danger {
+        background: var(--rose-50);
+        color: var(--rose-600);
+        border-color: var(--rose-100);
+      }
+
+      .btn-danger:hover:not(:disabled) {
+        background: var(--rose-100);
+        border-color: var(--rose-200, #fecdd3);
+      }
+
+      .btn-full { width: 100%; }
+      .btn-sm { padding: 8px 14px; font-size: 13px; }
+      .btn-xs { padding: 6px 10px; font-size: 12px; }
+
+      .login-error {
+        display: none;
+        background: var(--rose-50);
+        border: 1px solid var(--rose-100);
+        color: var(--rose-700);
+        padding: 10px 14px;
+        border-radius: var(--radius-sm);
+        font-size: 13px;
+        font-weight: 500;
+        margin-bottom: 16px;
+        animation: shakeX 0.4s ease;
+      }
+
+      .login-error.visible { display: block; }
+
+      @keyframes shakeX {
+        0%, 100% { transform: translateX(0); }
+        20%, 60% { transform: translateX(-6px); }
+        40%, 80% { transform: translateX(6px); }
+      }
+
+      /* ═══════════════════════════════════════════════════════════════
+         APP SHELL — Sidebar + Content
+         ═══════════════════════════════════════════════════════════════ */
+      #app-shell {
+        display: none;
+        min-height: 100vh;
+      }
+
+      #app-shell.visible { display: flex; }
+
+      .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        width: var(--sidebar-width);
+        background: var(--bg-sidebar);
+        border-right: 1px solid var(--border-color);
+        display: flex;
+        flex-direction: column;
+        z-index: 100;
+        overflow-y: auto;
+      }
+
+      .sidebar-brand {
+        padding: 24px 20px;
+        border-bottom: 1px solid var(--border-light);
+      }
+
+      .sidebar-brand-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .sidebar-logo {
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, var(--blue-500), var(--blue-700));
+        border-radius: var(--radius-sm);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        box-shadow: 0 2px 8px rgba(37,99,235,0.2);
+      }
+
+      .sidebar-logo svg { color: white; }
+
+      .sidebar-brand-text h2 {
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--text-primary);
+        letter-spacing: -0.01em;
+        line-height: 1.2;
+      }
+
+      .sidebar-brand-text p {
+        font-size: 11px;
+        color: var(--text-tertiary);
+        font-weight: 500;
+        margin-top: 2px;
+      }
+
+      .sidebar-nav {
+        flex: 1;
+        padding: 16px 12px;
+      }
+
+      .sidebar-section-label {
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--text-tertiary);
+        padding: 8px 12px 6px;
+        margin-top: 8px;
+      }
+
+      .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        border-radius: var(--radius-sm);
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: all var(--transition-fast);
+        border: 1.5px solid transparent;
+        margin-bottom: 2px;
+        background: none;
+        width: 100%;
+        text-align: left;
+      }
+
+      .nav-item:hover {
+        background: var(--slate-50);
+        color: var(--text-primary);
+      }
+
+      .nav-item.active {
+        background: var(--blue-50);
+        color: var(--blue-700);
+        border-color: var(--blue-200);
+        font-weight: 600;
+      }
+
+      .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+      .sidebar-footer {
+        padding: 16px 12px;
+        border-top: 1px solid var(--border-light);
+      }
+
+      .sidebar-user {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        border-radius: var(--radius-sm);
+        background: var(--slate-50);
+        margin-bottom: 8px;
+      }
+
+      .sidebar-user-avatar {
+        width: 34px;
+        height: 34px;
+        background: linear-gradient(135deg, var(--blue-400), var(--blue-600));
+        border-radius: var(--radius-full);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+        font-weight: 700;
+        color: white;
+        flex-shrink: 0;
+      }
+
+      .sidebar-user-info { overflow: hidden; }
+
+      .sidebar-user-info p {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-primary);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .sidebar-user-info span {
+        font-size: 11px;
+        color: var(--text-tertiary);
+      }
+
+      /* ═══════════════════════════════════════════════════════════════
+         MAIN CONTENT
+         ═══════════════════════════════════════════════════════════════ */
+      .main-content {
+        margin-left: var(--sidebar-width);
+        flex: 1;
+        min-height: 100vh;
+      }
+
+      .content-header {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        background: rgba(248,250,252,0.85);
+        backdrop-filter: blur(12px);
+        border-bottom: 1px solid var(--border-color);
+        padding: 0 32px;
+        height: var(--header-height);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .content-header h1 {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--text-primary);
+        letter-spacing: -0.01em;
+      }
+
+      .header-actions { display: flex; align-items: center; gap: 8px; }
+
+      .content-body {
+        padding: 28px 32px 48px;
+        max-width: 1100px;
+      }
+
+      /* ═══════════════════════════════════════════════════════════════
+         PAGE VIEWS
+         ═══════════════════════════════════════════════════════════════ */
+      .page-view { display: none; animation: fadeIn 0.25s ease; }
+      .page-view.active { display: block; }
+
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(8px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      /* ═══════════════════════════════════════════════════════════════
+         CARDS
+         ═══════════════════════════════════════════════════════════════ */
+      .card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        padding: 24px;
+        box-shadow: var(--shadow-sm);
+        transition: box-shadow var(--transition-base);
+      }
+
+      .card + .card { margin-top: 20px; }
+
+      .card-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 20px;
+      }
+
+      .card-title-group { display: flex; align-items: center; gap: 10px; }
+
+      .card-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: var(--radius-sm);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+
+      .card-icon.blue { background: var(--blue-50); color: var(--blue-600); }
+      .card-icon.emerald { background: var(--emerald-50); color: var(--emerald-600); }
+      .card-icon.amber { background: var(--amber-50); color: var(--amber-600); }
+
+      .card-icon svg { width: 18px; height: 18px; }
+
+      .card-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--text-primary);
+        letter-spacing: -0.01em;
+      }
+
+      .card-description {
+        font-size: 13px;
+        color: var(--text-secondary);
+        margin-top: 2px;
+      }
+
+      /* ═══════════════════════════════════════════════════════════════
+         BADGES & PILLS
+         ═══════════════════════════════════════════════════════════════ */
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: var(--radius-full);
+        font-size: 12px;
+        font-weight: 600;
+        border: 1px solid;
+      }
+
+      .badge-blue {
+        background: var(--blue-50);
+        color: var(--blue-700);
+        border-color: var(--blue-200);
+      }
+
+      .badge-emerald {
+        background: var(--emerald-50);
+        color: var(--emerald-700);
+        border-color: var(--emerald-100);
+      }
+
+      .badge svg { width: 14px; height: 14px; }
+
+      /* ═══════════════════════════════════════════════════════════════
+         TABS
+         ═══════════════════════════════════════════════════════════════ */
+      .tab-group {
+        display: inline-flex;
+        background: var(--slate-100);
+        border-radius: var(--radius-sm);
+        padding: 3px;
+        gap: 2px;
+      }
+
+      .tab-btn {
+        padding: 8px 18px;
+        font-size: 13px;
+        font-weight: 600;
+        border-radius: 6px;
+        border: none;
+        background: transparent;
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: all var(--transition-fast);
+      }
+
+      .tab-btn:hover { color: var(--text-primary); }
+
+      .tab-btn.active {
+        background: var(--bg-card);
+        color: var(--blue-700);
+        box-shadow: var(--shadow-sm);
+      }
+
+      /* ═══════════════════════════════════════════════════════════════
+         DATA TABLE
+         ═══════════════════════════════════════════════════════════════ */
+      .table-wrapper {
+        overflow-x: auto;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        background: var(--bg-card);
+      }
+
+      .data-table { width: 100%; border-collapse: collapse; min-width: 980px; }
+
+      .data-table thead {
+        background: var(--slate-50);
+        border-bottom: 1px solid var(--border-color);
+      }
+
+      .data-table th {
+        padding: 10px 16px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--text-secondary);
+        text-align: left;
+      }
+
+      .data-table td {
+        padding: 10px 16px;
+        font-size: 14px;
+        vertical-align: top;
+      }
+
+      .data-table tbody tr {
+        border-bottom: 1px solid var(--border-light);
+        transition: background var(--transition-fast);
+      }
+
+      .data-table tbody tr:last-child { border-bottom: none; }
+      .data-table tbody tr:hover { background: var(--slate-50); }
+
+      .table-input {
+        width: 100%;
+        padding: 8px 12px;
+        background: var(--bg-input);
+        border: 1.5px solid var(--border-color);
+        border-radius: 6px;
+        font-size: 13px;
+        color: var(--text-primary);
+        outline: none;
+        transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+      }
+
+      .table-input:focus {
+        border-color: var(--blue-400);
+        box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+      }
+
+      .table-input::placeholder { color: var(--text-tertiary); }
+
+      .table-input.mono { font-family: 'IBM Plex Mono', monospace; }
+
+      /* Results table (narrower) */
+      .results-table { min-width: 700px; }
+
+      /* ═══════════════════════════════════════════════════════════════
+         GEOFENCE ROW
+         ═══════════════════════════════════════════════════════════════ */
+      .geofence-grid {
+        display: grid;
+        grid-template-columns: auto repeat(3, minmax(0, 1fr));
+        gap: 6px;
+        align-items: center;
+      }
+
+      .geofence-hint {
+        font-size: 11px;
+        color: var(--text-tertiary);
+        margin-top: 4px;
+      }
+
+      .btn-locate {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 6px 10px;
+        font-size: 12px;
+        font-weight: 600;
+        background: var(--blue-50);
+        color: var(--blue-700);
+        border: 1px solid var(--blue-200);
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all var(--transition-fast);
+        white-space: nowrap;
+      }
+
+      .btn-locate:hover { background: var(--blue-100); }
+      .btn-locate svg { width: 14px; height: 14px; }
+
+      /* ═══════════════════════════════════════════════════════════════
+         DROP ZONE
+         ═══════════════════════════════════════════════════════════════ */
+      .drop-zone {
+        border: 2px dashed var(--border-color);
+        border-radius: var(--radius-lg);
+        padding: 40px 20px;
+        text-align: center;
+        background: var(--bg-card);
+        transition: all var(--transition-fast);
+        cursor: pointer;
+      }
+
+      .drop-zone:hover,
+      .drop-zone.drag-over {
+        border-color: var(--blue-400);
+        background: var(--blue-50);
+      }
+
+      .drop-zone-icon {
+        width: 48px;
+        height: 48px;
+        margin: 0 auto 12px;
+        background: var(--blue-50);
+        border-radius: var(--radius-md);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--blue-600);
+      }
+
+      .drop-zone-icon svg { width: 22px; height: 22px; }
+
+      .drop-zone-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+
+      .drop-zone-subtitle {
+        font-size: 12px;
+        color: var(--text-tertiary);
+        margin-top: 4px;
+      }
+
+      /* ═══════════════════════════════════════════════════════════════
+         BANNER (INFO / SUCCESS / ERROR)
+         ═══════════════════════════════════════════════════════════════ */
+      .banner {
+        display: none;
+        padding: 12px 16px;
+        border-radius: var(--radius-sm);
+        font-size: 13px;
+        font-weight: 500;
+        border: 1px solid;
+        margin-top: 16px;
+        animation: fadeIn 0.2s ease;
+      }
+
+      .banner.visible { display: block; }
+
+      .banner-error { background: var(--rose-50); border-color: var(--rose-100); color: var(--rose-700); }
+      .banner-success { background: var(--emerald-50); border-color: var(--emerald-100); color: var(--emerald-700); }
+      .banner-info { background: var(--sky-50); border-color: var(--sky-100); color: var(--sky-700); }
+
+      /* ═══════════════════════════════════════════════════════════════
+         MODAL
+         ═══════════════════════════════════════════════════════════════ */
+      .modal-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 200;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        background: rgba(15,23,42,0.4);
+        backdrop-filter: blur(6px);
+        padding: 20px;
+      }
+
+      .modal-overlay.visible { display: flex; }
+
+      .modal-card {
+        width: 100%;
+        max-width: 440px;
+        background: var(--bg-card);
+        border-radius: var(--radius-lg);
+        padding: 28px;
+        box-shadow: var(--shadow-xl);
+        animation: modalIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      @keyframes modalIn {
+        from { opacity: 0; transform: scale(0.95) translateY(10px); }
+        to { opacity: 1; transform: scale(1) translateY(0); }
+      }
+
+      .modal-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+
+      .modal-header h3 {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--text-primary);
+      }
+
+      .modal-close {
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        background: var(--bg-card);
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: all var(--transition-fast);
+        flex-shrink: 0;
+      }
+
+      .modal-close:hover { background: var(--slate-50); color: var(--text-primary); }
+      .modal-close svg { width: 16px; height: 16px; }
+
+      .modal-image-wrapper {
+        background: var(--slate-50);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        padding: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .modal-image-wrapper img {
+        width: 240px;
+        height: 240px;
+        border-radius: var(--radius-sm);
+        background: white;
+        padding: 8px;
+        border: 1px solid var(--border-color);
+      }
+
+      .modal-actions {
+        margin-top: 14px;
+        display: flex;
+        justify-content: flex-end;
+      }
+
+      /* ═══════════════════════════════════════════════════════════════
+         SETTINGS PAGE
+         ═══════════════════════════════════════════════════════════════ */
+      .settings-form { max-width: 520px; }
+
+      .settings-form .form-group { margin-bottom: 24px; }
+
+      .form-hint {
+        font-size: 12px;
+        color: var(--text-tertiary);
+        margin-top: 4px;
+      }
+
+      .form-divider {
+        border: none;
+        border-top: 1px solid var(--border-light);
+        margin: 28px 0;
+      }
+
+      .password-toggle {
+        position: absolute;
+        right: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: var(--blue-600);
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        padding: 4px 8px;
+        border-radius: 4px;
+        transition: background var(--transition-fast);
+      }
+
+      .password-toggle:hover { background: var(--blue-50); }
+
+      .settings-banner {
+        display: none;
+        padding: 12px 16px;
+        border-radius: var(--radius-sm);
+        font-size: 13px;
+        font-weight: 500;
+        border: 1px solid;
+        margin-bottom: 20px;
+        animation: fadeIn 0.2s ease;
+      }
+
+      .settings-banner.visible { display: block; }
+
+      /* ═══════════════════════════════════════════════════════════════
+         ROW ACTIONS
+         ═══════════════════════════════════════════════════════════════ */
+      .row-actions { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: 12px; }
+      .row-tip { font-size: 12px; color: var(--text-tertiary); }
+
+      .id-manager-search {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .id-manager-search .search-input-wrap {
+        flex: 1;
+        min-width: 260px;
+      }
+
+      .manager-table { min-width: 940px; }
+
+      .public-id-cell {
+        max-width: 280px;
+        word-break: break-all;
+        font-size: 12px;
+        color: var(--text-secondary);
+      }
+
+      .manager-id-input { min-width: 220px; }
+
+      .manager-scan-wrap {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .manager-scan-used {
+        font-size: 12px;
+        color: var(--text-tertiary);
+      }
+
+      .manager-scan-input {
+        max-width: 120px;
+      }
+
+      .manager-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .manager-empty {
+        text-align: center;
+        color: var(--text-tertiary);
+        padding: 18px 12px;
+        font-size: 13px;
+      }
+
+      .id-counter {
+        padding: 4px 12px;
+        background: var(--slate-100);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-full);
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-secondary);
+      }
+
+      /* ═══════════════════════════════════════════════════════════════
+         LOADING DOT
+         ═══════════════════════════════════════════════════════════════ */
+      .loading-text {
+        display: none;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--text-secondary);
+      }
+
+      .loading-text.visible { display: inline-flex; }
+
+      .results-actions {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin: 12px 0;
+      }
+
+      .results-actions .row-tip {
+        margin: 0;
+      }
+
+      .pulse-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--blue-500);
+        animation: pulse 1.2s ease infinite;
+      }
+
+      @keyframes pulse {
+        0%, 100% { opacity: 0.4; transform: scale(0.8); }
+        50% { opacity: 1; transform: scale(1); }
+      }
+
+      /* ═══════════════════════════════════════════════════════════════
+         ICON BUTTON (trash, etc.)
+         ═══════════════════════════════════════════════════════════════ */
+      .icon-btn {
+        width: 34px;
+        height: 34px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
+        border: 1px solid var(--border-color);
+        background: var(--bg-card);
+        color: var(--text-tertiary);
+        cursor: pointer;
+        transition: all var(--transition-fast);
+      }
+
+      .icon-btn:hover { background: var(--slate-50); color: var(--text-secondary); }
+      .icon-btn svg { width: 16px; height: 16px; }
+
+      /* ═══════════════════════════════════════════════════════════════
+         SPINNER (LOGIN)
+         ═══════════════════════════════════════════════════════════════ */
+      .btn-spinner {
+        width: 16px;
+        height: 16px;
+        border: 2px solid rgba(255,255,255,0.3);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: spin 0.6s linear infinite;
+        display: none;
+      }
+
+      .btn-spinner.visible { display: inline-block; }
+
+      @keyframes spin { to { transform: rotate(360deg); } }
+
+      /* ═══════════════════════════════════════════════════════════════
+         UTILITIES
+         ═══════════════════════════════════════════════════════════════ */
+      .hidden { display: none !important; }
+      .text-center { text-align: center; }
+      .mt-4 { margin-top: 16px; }
+      .mb-2 { margin-bottom: 8px; }
+      .gap-3 { gap: 12px; }
+
+      /* ═══════════════════════════════════════════════════════════════
+         MOBILE NAV
+         ═══════════════════════════════════════════════════════════════ */
+      .mobile-nav {
+        display: none;
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 130;
+        padding: 8px 12px calc(10px + env(safe-area-inset-bottom));
+        border-top: 1px solid var(--border-color);
+        background: rgba(255,255,255,0.95);
+        backdrop-filter: blur(10px);
+      }
+
+      .mobile-nav-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .mobile-nav .nav-item {
+        margin: 0;
+        width: 100%;
+        flex-direction: column;
+        justify-content: center;
+        gap: 4px;
+        padding: 8px 6px;
+        font-size: 11px;
+        border-radius: 10px;
+        text-align: center;
+      }
+
+      .mobile-nav .nav-item svg {
+        width: 16px;
+        height: 16px;
+      }
+
+      /* ═══════════════════════════════════════════════════════════════
+         RESPONSIVE
+         ═══════════════════════════════════════════════════════════════ */
+      @media (max-width: 980px) {
+        .secure-config-grid {
+          grid-template-columns: 1fr !important;
+        }
+
+        .manual-table-wrap,
+        .results-table-wrap,
+        .manager-table-wrap {
+          border: none;
+          background: transparent;
+          overflow: visible;
+        }
+
+        .stack-mobile-table {
+          min-width: 0;
+          width: 100%;
+          border-collapse: separate;
+          border-spacing: 0;
+        }
+
+        .stack-mobile-table thead {
+          display: none;
+        }
+
+        .stack-mobile-table tbody {
+          display: block;
+        }
+
+        .stack-mobile-table tbody tr {
+          display: block;
+          margin-bottom: 10px;
+          padding: 10px 12px;
+          border: 1px solid var(--border-color);
+          border-radius: 12px;
+          background: var(--bg-card);
+          box-shadow: var(--shadow-sm);
+        }
+
+        .stack-mobile-table tbody tr:last-child {
+          margin-bottom: 0;
+        }
+
+        .stack-mobile-table tbody td {
+          display: block;
+          padding: 6px 0;
+          border: 0;
+        }
+
+        .stack-mobile-table tbody td[data-label]::before {
+          content: attr(data-label);
+          display: block;
+          margin-bottom: 4px;
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          color: var(--text-tertiary);
+        }
+
+        .stack-mobile-table .manager-actions {
+          flex-wrap: wrap;
+        }
+
+        .stack-mobile-table .manager-actions .btn {
+          flex: 1 1 auto;
+          justify-content: center;
+        }
+
+        .stack-mobile-table .manager-scan-input {
+          max-width: 100%;
+        }
+      }
+
+      @media (max-width: 768px) {
+        :root {
+          --sidebar-width: 0px;
+          --header-height: 58px;
+        }
+
+        .sidebar { display: none; }
+        .mobile-nav { display: block; }
+
+        .content-header { padding: 0 16px; }
+        .content-body {
+          padding: 16px;
+          padding-bottom: calc(var(--mobile-nav-height) + 16px + env(safe-area-inset-bottom));
+        }
+
+        .form-input,
+        .table-input {
+          font-size: 16px;
+        }
+
+        .card {
+          padding: 16px;
+          border-radius: var(--radius-md);
+        }
+
+        .card-header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 10px;
+          margin-bottom: 14px;
+        }
+
+        .id-manager-search {
+          flex-direction: column;
+          align-items: stretch;
+        }
+
+        .id-manager-search .search-input-wrap {
+          min-width: 0;
+          width: 100%;
+        }
+
+        .id-manager-search .btn {
+          width: 100%;
+        }
+
+        .results-actions {
+          flex-direction: column;
+          align-items: stretch;
+        }
+
+        .results-actions .btn {
+          width: 100%;
+        }
+
+        .row-tip { width: 100%; }
+        .manager-actions { flex-wrap: wrap; }
+
+        .login-card { padding: 32px 24px; }
+
+        .geofence-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .modal-card {
+          max-width: 95vw;
+          padding: 20px;
+        }
+
+        .modal-image-wrapper img {
+          width: min(70vw, 240px);
+          height: min(70vw, 240px);
+        }
+      }
+
+      @media (min-width: 769px) and (max-width: 1100px) {
+        :root { --sidebar-width: 220px; }
+
+        .content-header { padding: 0 20px; }
+        .content-body { padding: 22px 20px 42px; }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- ══════════════════════════════════════════════════════════════════
+         LOGIN SCREEN
+         ══════════════════════════════════════════════════════════════════ -->
+    <div id="login-screen">
+      <div class="login-bg-pattern"></div>
+      <div class="login-card">
+        <div class="login-logo">
+          <i data-lucide="shield-check" style="width:28px;height:28px"></i>
+        </div>
+        <h1 class="login-title">Welcome Back</h1>
+        <p class="login-subtitle">Sign in to the Asset Tracking Admin Panel</p>
+
+        <div id="login-error" class="login-error"></div>
+
+        <form id="login-form" autocomplete="off">
+          <div class="form-group">
+            <label for="login-username" class="form-label">Username</label>
+            <div class="form-input-wrapper">
+              <i data-lucide="user" class="form-input-icon" style="width:16px;height:16px"></i>
+              <input id="login-username" type="text" class="form-input" placeholder="Enter your username" required />
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="login-password" class="form-label">Password</label>
+            <div class="form-input-wrapper">
+              <i data-lucide="lock" class="form-input-icon" style="width:16px;height:16px"></i>
+              <input id="login-password" type="password" class="form-input" placeholder="Enter your password" required />
+            </div>
+          </div>
+          <button id="login-btn" type="submit" class="btn btn-primary btn-full" style="padding:14px 20px; font-size:15px; margin-top:8px;">
+            <span id="login-btn-text">Sign In</span>
+            <span id="login-btn-spinner" class="btn-spinner"></span>
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         APP SHELL
+         ══════════════════════════════════════════════════════════════════ -->
+    <div id="app-shell">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <div class="sidebar-brand">
+          <div class="sidebar-brand-row">
+            <div class="sidebar-logo">
+              <i data-lucide="shield-check" style="width:20px;height:20px"></i>
+            </div>
+            <div class="sidebar-brand-text">
+              <h2>Asset Tracker</h2>
+              <p>Admin Panel</p>
+            </div>
+          </div>
+        </div>
+
+        <nav class="sidebar-nav">
+          <div class="sidebar-section-label">Main</div>
+          <button class="nav-item active" data-page="dashboard" id="nav-dashboard">
+            <i data-lucide="layout-dashboard"></i>
+            Dashboard
+          </button>
+          <button class="nav-item" data-page="id-manager" id="nav-id-manager">
+            <i data-lucide="search"></i>
+            ID Manager
+          </button>
+          <button class="nav-item" data-page="settings" id="nav-settings">
+            <i data-lucide="settings"></i>
+            Settings
+          </button>
+        </nav>
+
+        <div class="sidebar-footer">
+          <div class="sidebar-user">
+            <div class="sidebar-user-avatar" id="user-avatar">A</div>
+            <div class="sidebar-user-info">
+              <p id="user-display-name">admin</p>
+              <span>Administrator</span>
+            </div>
+          </div>
+          <button id="logout-btn" class="btn btn-ghost btn-full" style="justify-content:flex-start; color:var(--rose-600);">
+            <i data-lucide="log-out" style="width:16px;height:16px"></i>
+            Sign Out
+          </button>
+        </div>
+      </aside>
+
+      <!-- Main Content -->
+      <div class="main-content">
+        <header class="content-header">
+          <h1 id="page-title">Dashboard</h1>
+          <div class="header-actions">
+            <span class="badge badge-blue">
+              <i data-lucide="lock" style="width:12px;height:12px"></i>
+              AES-256-GCM
+            </span>
+          </div>
+        </header>
+
+        <div class="content-body">
+          <!-- ─── DASHBOARD PAGE ──────────────────────────────── -->
+          <div id="page-dashboard" class="page-view active">
+            <!-- Secure Config Card -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title-group">
+                  <div class="card-icon blue">
+                    <i data-lucide="key-round"></i>
+                  </div>
+                  <div>
+                    <h2 class="card-title">Secure Configuration</h2>
+                    <p class="card-description">This key protects each generated payload.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="secure-config-grid" style="display:grid; gap:12px; grid-template-columns:1fr auto; align-items:end;">
+                <div>
+                  <label for="master-key" class="form-label">Master Encryption Key</label>
+                  <div class="form-input-wrapper">
+                    <input id="master-key" type="password" autocomplete="off" class="form-input" placeholder="Enter master key (minimum 8 characters)" />
+                    <button id="toggle-key-visibility" type="button" class="password-toggle">Show</button>
+                  </div>
+                </div>
+                <label style="display:inline-flex; align-items:center; gap:8px; padding:12px 16px; border:1px solid var(--border-color); border-radius:var(--radius-sm); font-size:13px; font-weight:500; color:var(--text-secondary); cursor:pointer; white-space:nowrap;">
+                  <input id="remember-key" type="checkbox" style="accent-color:var(--blue-600); width:16px; height:16px;" />
+                  Remember key
+                </label>
+              </div>
+            </div>
+
+            <!-- ID Source Card -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title-group">
+                  <div class="card-icon blue">
+                    <i data-lucide="table-properties"></i>
+                  </div>
+                  <div>
+                    <h2 class="card-title">ID Source</h2>
+                    <p class="card-description">Use manual entry or upload from spreadsheet.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="tab-group" style="margin-bottom:16px;">
+                <button type="button" data-tab="manual" class="tab-btn active">Manual Entry</button>
+                <button type="button" data-tab="bulk" class="tab-btn">Bulk Upload</button>
+              </div>
+
+              <!-- Manual Panel -->
+              <div id="manual-panel">
+                <div class="table-wrapper manual-table-wrap">
+                  <table class="data-table manual-table stack-mobile-table">
+                    <thead>
+                      <tr>
+                        <th style="width:50px">#</th>
+                        <th>Asset ID</th>
+                        <th style="width:110px">Max Scans</th>
+                        <th>Geofence</th>
+                        <th style="width:60px">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody id="rows-body"></tbody>
+                  </table>
+                </div>
+                <div class="row-actions">
+                  <button id="add-row" type="button" class="btn btn-primary btn-sm">
+                    <i data-lucide="plus" style="width:14px;height:14px"></i>
+                    Add Row
+                  </button>
+                  <button id="clear-rows" type="button" class="btn btn-secondary btn-sm">
+                    <i data-lucide="eraser" style="width:14px;height:14px"></i>
+                    Clear
+                  </button>
+                  <span class="row-tip">Tip: Paste Asset ID, Max Scans, Lat, Lon, Radius from Excel.</span>
+                </div>
+              </div>
+
+              <!-- Bulk Panel -->
+              <div id="bulk-panel" class="hidden">
+                <div id="drop-zone" class="drop-zone">
+                  <div class="drop-zone-icon">
+                    <i data-lucide="file-up"></i>
+                  </div>
+                  <p class="drop-zone-title">Drag and drop an .xlsx or .csv file</p>
+                  <p class="drop-zone-subtitle">Columns auto-map by header: Asset ID, Max Scans, Lat, Lon, Radius (m).</p>
+                  <button id="select-file-btn" type="button" class="btn btn-secondary btn-sm" style="margin-top:16px;">
+                    Select File
+                  </button>
+                  <input id="file-input" type="file" accept=".xlsx,.xls,.csv" class="hidden" />
+                </div>
+                <p id="file-feedback" style="font-size:13px; color:var(--text-secondary); margin-top:8px;"></p>
+              </div>
+            </div>
+
+            <!-- Generate & Review Card -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title-group">
+                  <div class="card-icon emerald">
+                    <i data-lucide="play-circle"></i>
+                  </div>
+                  <div>
+                    <h2 class="card-title">Generate & Review</h2>
+                    <p class="card-description">Encrypt assets and generate QR tags.</p>
+                  </div>
+                </div>
+                <span id="id-count" class="id-counter">0 ID(s) ready</span>
+              </div>
+
+              <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                <button id="generate-btn" type="button" disabled class="btn btn-primary">
+                  <i data-lucide="zap" style="width:16px;height:16px"></i>
+                  Generate & Encrypt
+                </button>
+                <div id="loading-text" class="loading-text">
+                  <span class="pulse-dot"></span>
+                  Processing secure payloads…
+                </div>
+              </div>
+
+              <div id="banner" class="banner"></div>
+
+              <div id="results-section" class="hidden" style="margin-top:16px;">
+                <div class="results-actions">
+                  <button id="download-all-pdf-btn" type="button" class="btn btn-primary btn-sm">
+                    <i data-lucide="file-down" style="width:14px;height:14px"></i>
+                    Download All Encrypted QRs (PDF)
+                  </button>
+                  <span class="row-tip">One PDF file, 6 encrypted QRs per page.</span>
+                </div>
+                <div class="table-wrapper results-table-wrap">
+                  <table class="data-table results-table stack-mobile-table">
+                    <thead>
+                      <tr>
+                        <th style="width:90px">Status</th>
+                        <th>Original ID</th>
+                        <th style="width:120px">View</th>
+                        <th style="width:140px">Download PDF</th>
+                      </tr>
+                    </thead>
+                    <tbody id="results-body"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ─── ID MANAGER PAGE ────────────────────────────── -->
+          <div id="page-id-manager" class="page-view">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title-group">
+                  <div class="card-icon blue">
+                    <i data-lucide="search-check"></i>
+                  </div>
+                  <div>
+                    <h2 class="card-title">Search Existing IDs</h2>
+                    <p class="card-description">Find and manage asset IDs already stored in the database.</p>
+                  </div>
+                </div>
+              </div>
+
+              <form id="asset-search-form" class="id-manager-search" autocomplete="off">
+                <div class="form-input-wrapper search-input-wrap">
+                  <i data-lucide="search" class="form-input-icon" style="width:16px;height:16px"></i>
+                  <input id="asset-search-input" type="text" class="form-input" placeholder="Search by Asset ID..." />
+                </div>
+                <button id="asset-search-btn" type="submit" class="btn btn-primary btn-sm">
+                  <i data-lucide="search" style="width:14px;height:14px"></i>
+                  Search
+                </button>
+                <button id="asset-search-clear" type="button" class="btn btn-secondary btn-sm">
+                  <i data-lucide="rotate-ccw" style="width:14px;height:14px"></i>
+                  Reset
+                </button>
+              </form>
+
+              <p class="form-hint" style="margin-top:10px;">Search runs against IDs already saved in MySQL.</p>
+              <div id="id-manager-banner" class="banner"></div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title-group">
+                  <div class="card-icon emerald">
+                    <i data-lucide="history"></i>
+                  </div>
+                  <div>
+                    <h2 class="card-title">Recently Added IDs</h2>
+                    <p class="card-description">Shows the latest 20 IDs. You can update max scans or delete any entry below.</p>
+                  </div>
+                </div>
+                <span id="recent-ids-count" class="id-counter">0 ID(s)</span>
+              </div>
+
+              <div class="table-wrapper manager-table-wrap">
+                <table class="data-table manager-table stack-mobile-table">
+                  <thead>
+                    <tr>
+                      <th style="width:180px;">Added At</th>
+                      <th style="width:320px;">Public ID</th>
+                      <th>Asset ID</th>
+                      <th style="width:150px;">Scans</th>
+                      <th style="width:280px;">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="recent-ids-body">
+                    <tr>
+                      <td colspan="5" class="manager-empty">No IDs loaded yet.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- ─── SETTINGS PAGE ───────────────────────────────── -->
+          <div id="page-settings" class="page-view">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title-group">
+                  <div class="card-icon amber">
+                    <i data-lucide="user-cog"></i>
+                  </div>
+                  <div>
+                    <h2 class="card-title">Account Settings</h2>
+                    <p class="card-description">Update your login credentials.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div id="settings-banner" class="settings-banner"></div>
+
+              <form id="settings-form" class="settings-form" autocomplete="off">
+                <div class="form-group">
+                  <label for="settings-current-password" class="form-label">Current Password *</label>
+                  <div class="form-input-wrapper">
+                    <input id="settings-current-password" type="password" class="form-input" placeholder="Enter current password" required />
+                  </div>
+                  <p class="form-hint">Required to verify your identity before making changes.</p>
+                </div>
+
+                <hr class="form-divider" />
+
+                <div class="form-group">
+                  <label for="settings-new-username" class="form-label">New Username</label>
+                  <div class="form-input-wrapper">
+                    <input id="settings-new-username" type="text" class="form-input" placeholder="Leave blank to keep current" minlength="3" maxlength="100" />
+                  </div>
+                  <p class="form-hint">3–100 characters. Leave blank to keep current username.</p>
+                </div>
+
+                <div class="form-group">
+                  <label for="settings-new-password" class="form-label">New Password</label>
+                  <div class="form-input-wrapper">
+                    <input id="settings-new-password" type="password" class="form-input" placeholder="Leave blank to keep current" minlength="6" />
+                  </div>
+                  <p class="form-hint">Minimum 6 characters. Leave blank to keep current password.</p>
+                </div>
+
+                <div class="form-group">
+                  <label for="settings-confirm-password" class="form-label">Confirm New Password</label>
+                  <div class="form-input-wrapper">
+                    <input id="settings-confirm-password" type="password" class="form-input" placeholder="Repeat new password" />
+                  </div>
+                </div>
+
+                <button id="settings-save-btn" type="submit" class="btn btn-primary" style="margin-top:8px;">
+                  <i data-lucide="save" style="width:16px;height:16px"></i>
+                  Save Changes
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mobile Navigation -->
+      <nav class="mobile-nav" aria-label="Mobile navigation">
+        <div class="mobile-nav-grid">
+          <button class="nav-item active" data-page="dashboard" id="mobile-nav-dashboard">
+            <i data-lucide="layout-dashboard"></i>
+            Dashboard
+          </button>
+          <button class="nav-item" data-page="id-manager" id="mobile-nav-id-manager">
+            <i data-lucide="search"></i>
+            ID Manager
+          </button>
+          <button class="nav-item" data-page="settings" id="mobile-nav-settings">
+            <i data-lucide="settings"></i>
+            Settings
+          </button>
+        </div>
+      </nav>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         QR PREVIEW MODAL
+         ══════════════════════════════════════════════════════════════════ -->
+    <div id="qr-modal" class="modal-overlay">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div>
+            <h3>QR Preview</h3>
+            <p id="modal-id" class="mono" style="font-size:12px; color:var(--text-tertiary); margin-top:4px; word-break:break-all;"></p>
+          </div>
+          <button id="close-modal" type="button" class="modal-close">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+        <div class="modal-image-wrapper">
+          <img id="modal-image" alt="QR Code Preview" />
+        </div>
+        <div class="modal-actions">
+          <button id="modal-download-btn" type="button" class="btn btn-primary btn-sm">
+            <i data-lucide="download" style="width:14px;height:14px"></i>
+            Download QR
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Load JS logic from separate file -->
+    <script src="/static/admin.js?v=20260408c"></script>
+  </body>
+</html>
