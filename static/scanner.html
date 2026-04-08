@@ -394,6 +394,40 @@
         return payload;
       }
 
+      function normalizeVerificationErrorMessage(rawMessage) {
+        const message = String(rawMessage || "").trim();
+        const lowered = message.toLowerCase();
+
+        if (lowered.includes("outside the authorized scanning zone") || lowered.includes("outside the area")) {
+          return "Outside the area.";
+        }
+
+        if (lowered.includes("maximum scanning limit reached") || lowered.includes("invalid qr")) {
+          return "Invalid QR.";
+        }
+
+        return message || "Security warning triggered.";
+      }
+
+      function normalizeStartupError(error) {
+        const message = String((error && error.message) || error || "").trim();
+        const lowered = message.toLowerCase();
+
+        if (!window.isSecureContext && location.hostname !== "localhost" && location.hostname !== "127.0.0.1") {
+          return "Camera and location permissions require HTTPS or localhost.";
+        }
+
+        if (lowered.includes("permission") || lowered.includes("notallowederror") || lowered.includes("denied")) {
+          return "Camera permission denied. Please allow camera access and retry.";
+        }
+
+        if (lowered.includes("secure") || lowered.includes("https")) {
+          return "Camera access requires HTTPS or localhost.";
+        }
+
+        return message || "Unable to start camera scanner.";
+      }
+
       async function onScanSuccess(decodedText) {
         const now = Date.now();
         if (isVerifying) {
@@ -415,8 +449,9 @@
           showModal("Success", `Actual ID: ${payload.original_id}`, true);
           setStatus("Verified. Ready for next asset.");
         } catch (error) {
-          showModal("Security Warning", error.message || "Tampered or unknown QR detected.", false);
-          setStatus(error.message || "Security warning triggered.", true);
+          const userMessage = normalizeVerificationErrorMessage(error && error.message);
+          showModal("Security Warning", userMessage, false);
+          setStatus(userMessage, true);
         } finally {
           setTimeout(() => {
             isVerifying = false;
@@ -465,23 +500,32 @@
             );
             setStatus("Camera active. Scan an encrypted QR code.");
           } catch (fallbackError) {
-            setStatus(fallbackError.message || "Unable to start camera scanner.", true);
+            const startupMessage = normalizeStartupError(fallbackError);
+            showModal("Camera Error", startupMessage, false);
+            setStatus(startupMessage, true);
           }
         }
       }
 
       async function initializeScanner() {
-        try {
-          setStatus("Requesting location permission...");
-          userLocation = await captureCurrentLocation();
-        } catch (error) {
-          const message = error.message || "Location access is required to verify this QR.";
-          showModal("Location Required", message, false);
-          setStatus(message, true);
+        if (!window.isSecureContext && location.hostname !== "localhost" && location.hostname !== "127.0.0.1") {
+          const secureContextMessage = "Camera and location permissions require HTTPS or localhost.";
+          showModal("Secure Context Required", secureContextMessage, false);
+          setStatus(secureContextMessage, true);
           return;
         }
 
         await startScannerWithFallback();
+
+        try {
+          setStatus("Requesting location permission...");
+          userLocation = await captureCurrentLocation();
+          setStatus("Camera active. Scan an encrypted QR code.");
+        } catch (error) {
+          const message = error.message || "Location permission not granted. Enable location to verify QRs.";
+          showModal("Location Required", message, false);
+          setStatus("Camera active. Location will be requested when verifying.", false);
+        }
       }
 
       closeModalBtn.addEventListener("click", () => {

@@ -389,7 +389,7 @@ def verify_asset(payload: VerifyRequest, db: Session = Depends(get_db)) -> Verif
 
     if scan_count >= max_scans:
         db.rollback()
-        raise HTTPException(status_code=403, detail="Error: Maximum scanning limit reached.")
+        raise HTTPException(status_code=403, detail="Invalid QR.")
 
     if record.lat is not None and record.lon is not None:
         distance_meters = _haversine_distance_meters(
@@ -404,7 +404,7 @@ def verify_asset(payload: VerifyRequest, db: Session = Depends(get_db)) -> Verif
             db.rollback()
             raise HTTPException(
                 status_code=403,
-                detail="Error: Access Denied. You are outside the authorized scanning zone.",
+                detail="Outside the area.",
             )
 
     try:
