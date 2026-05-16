@@ -98,6 +98,13 @@ const idManagerBanner       = document.getElementById("id-manager-banner");
 const recentIdsCount        = document.getElementById("recent-ids-count");
 const recentIdsBody         = document.getElementById("recent-ids-body");
 
+// DB Reset
+const resetDbBtn            = document.getElementById("reset-db-btn");
+const resetDbModal          = document.getElementById("reset-db-modal");
+const closeResetModalBtn    = document.getElementById("close-reset-modal");
+const cancelResetBtn        = document.getElementById("cancel-reset-btn");
+const confirmResetBtn       = document.getElementById("confirm-reset-btn");
+
 // ─── State ───────────────────────────────────────────────────────────
 const state = {
   loading: false,
@@ -1368,6 +1375,66 @@ toggleKeyVisibilityBtn.addEventListener("click", () => {
   masterKeyInput.type = isPwd ? "text" : "password";
   toggleKeyVisibilityBtn.textContent = isPwd ? "Hide" : "Show";
 });
+
+// ═══════════════════════════════════════════════════════════════════════
+// DB RESET
+// ═══════════════════════════════════════════════════════════════════════
+
+function openResetDbModal() {
+  resetDbModal.classList.add("visible");
+}
+
+function closeResetDbModal() {
+  resetDbModal.classList.remove("visible");
+}
+
+if (resetDbBtn) {
+  resetDbBtn.addEventListener("click", openResetDbModal);
+}
+
+if (closeResetModalBtn) {
+  closeResetModalBtn.addEventListener("click", closeResetDbModal);
+}
+
+if (cancelResetBtn) {
+  cancelResetBtn.addEventListener("click", closeResetDbModal);
+}
+
+if (resetDbModal) {
+  resetDbModal.addEventListener("click", (e) => {
+    if (e.target === resetDbModal) closeResetDbModal();
+  });
+}
+
+if (confirmResetBtn) {
+  confirmResetBtn.addEventListener("click", async () => {
+    const originalText = confirmResetBtn.innerHTML;
+    confirmResetBtn.disabled = true;
+    confirmResetBtn.textContent = "Resetting...";
+    cancelResetBtn.disabled = true;
+
+    try {
+      const res = await fetch("/api/assets", {
+        method: "DELETE",
+        headers: authHeaders(),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.detail || "Failed to reset database.");
+
+      showIdManagerBanner("Database has been successfully reset.", "success");
+      await refreshManagedAssets(assetSearchInput.value);
+      closeResetDbModal();
+    } catch (err) {
+      showIdManagerBanner(err.message || "Failed to reset database.", "error");
+      closeResetDbModal();
+    } finally {
+      confirmResetBtn.disabled = false;
+      confirmResetBtn.innerHTML = originalText;
+      cancelResetBtn.disabled = false;
+    }
+  });
+}
 
 // ═══════════════════════════════════════════════════════════════════════
 // BOOT

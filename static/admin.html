@@ -1621,6 +1621,26 @@
                 </table>
               </div>
             </div>
+
+            <!-- Danger Zone Card -->
+            <div class="card" style="border-color: var(--rose-200); margin-top: 20px;">
+              <div class="card-header">
+                <div class="card-title-group">
+                  <div class="card-icon rose" style="background: var(--rose-50); color: var(--rose-600);">
+                    <i data-lucide="database-zap"></i>
+                  </div>
+                  <div>
+                    <h2 class="card-title" style="color: var(--rose-600);">Danger Zone</h2>
+                    <p class="card-description">Permanent database actions.</p>
+                  </div>
+                </div>
+              </div>
+              <p class="form-hint" style="margin-bottom: 12px; font-size: 13px;">Resetting the database will permanently delete all asset IDs and related data. This action cannot be undone.</p>
+              <button id="reset-db-btn" type="button" class="btn btn-danger btn-sm">
+                <i data-lucide="alert-triangle" style="width:14px;height:14px"></i>
+                Reset Database
+              </button>
+            </div>
           </div>
 
           <!-- ─── SETTINGS PAGE ───────────────────────────────── -->
@@ -1725,6 +1745,30 @@
             <i data-lucide="download" style="width:14px;height:14px"></i>
             Download QR
           </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         DB RESET MODAL
+         ══════════════════════════════════════════════════════════════════ -->
+    <div id="reset-db-modal" class="modal-overlay">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div>
+            <h3 style="color: var(--rose-600);">Reset Database</h3>
+            <p style="font-size:12px; color:var(--text-tertiary); margin-top:4px;">Are you sure?</p>
+          </div>
+          <button id="close-reset-modal" type="button" class="modal-close">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+        <p style="font-size:14px; color:var(--text-primary); margin-bottom: 24px; line-height: 1.5;">
+          This action will permanently delete all data from the database. <strong>This cannot be undone.</strong> Are you absolutely sure?
+        </p>
+        <div class="modal-actions" style="gap: 10px; display: flex; justify-content: flex-end;">
+          <button id="cancel-reset-btn" type="button" class="btn btn-secondary">No</button>
+          <button id="confirm-reset-btn" type="button" class="btn btn-danger">Yes, Reset DB</button>
         </div>
       </div>
     </div>

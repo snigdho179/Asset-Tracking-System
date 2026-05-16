@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from jose import JWTError, jwt
-from sqlalchemy import select
+from sqlalchemy import select, delete
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
@@ -357,6 +357,30 @@ def delete_asset(
     return AssetDeleteResponse(
         message="Asset deleted successfully.",
         public_id=public_id,
+    )
+
+
+@app.delete("/api/assets", response_model=AssetDeleteResponse)
+def delete_all_assets(
+    _: AdminUser = Depends(_get_current_user),
+    db: Session = Depends(get_db),
+) -> AssetDeleteResponse:
+    try:
+        db.execute(delete(AssetRecord))
+        db.commit()
+    except SQLAlchemyError as exc:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Database error while deleting all assets.") from exc
+
+    for qr_file in QR_DIR.glob("*.png"):
+        try:
+            qr_file.unlink(missing_ok=True)
+        except OSError:
+            pass
+
+    return AssetDeleteResponse(
+        message="All assets deleted successfully.",
+        public_id="all",
     )
 
 
