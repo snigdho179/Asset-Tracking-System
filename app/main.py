@@ -324,6 +324,30 @@ def update_asset(
     )
 
 
+@app.delete("/api/assets", response_model=AssetDeleteResponse)
+def delete_all_assets(
+    _: AdminUser = Depends(_get_current_user),
+    db: Session = Depends(get_db),
+) -> AssetDeleteResponse:
+    try:
+        db.execute(delete(AssetRecord))
+        db.commit()
+    except SQLAlchemyError as exc:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Database error while deleting all assets.") from exc
+
+    for qr_file in QR_DIR.glob("*.png"):
+        try:
+            qr_file.unlink(missing_ok=True)
+        except OSError:
+            pass
+
+    return AssetDeleteResponse(
+        message="All assets deleted successfully.",
+        public_id="all",
+    )
+
+
 @app.delete("/api/assets/{public_id}", response_model=AssetDeleteResponse)
 def delete_asset(
     public_id: str,
@@ -357,30 +381,6 @@ def delete_asset(
     return AssetDeleteResponse(
         message="Asset deleted successfully.",
         public_id=public_id,
-    )
-
-
-@app.delete("/api/assets", response_model=AssetDeleteResponse)
-def delete_all_assets(
-    _: AdminUser = Depends(_get_current_user),
-    db: Session = Depends(get_db),
-) -> AssetDeleteResponse:
-    try:
-        db.execute(delete(AssetRecord))
-        db.commit()
-    except SQLAlchemyError as exc:
-        db.rollback()
-        raise HTTPException(status_code=500, detail="Database error while deleting all assets.") from exc
-
-    for qr_file in QR_DIR.glob("*.png"):
-        try:
-            qr_file.unlink(missing_ok=True)
-        except OSError:
-            pass
-
-    return AssetDeleteResponse(
-        message="All assets deleted successfully.",
-        public_id="all",
     )
 
 
