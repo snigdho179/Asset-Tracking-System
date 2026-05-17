@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import AliasChoices, BaseModel, Field, field_validator, model_validator
 
 
 class IngestRecord(BaseModel):
@@ -118,6 +118,12 @@ class AssetDeleteResponse(BaseModel):
 
 class VerifyRequest(BaseModel):
     encrypted_blob: str
+    public_id: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("public_id", "public_key"),
+        description="Public asset identifier from the QR payload",
+    )
+    private_key: str = Field(..., min_length=1, description="User-supplied private key for decryption")
     user_lat: float = Field(..., ge=-90, le=90)
     user_lon: float = Field(..., ge=-180, le=180)
 
@@ -128,6 +134,22 @@ class VerifyRequest(BaseModel):
         if not cleaned:
             raise ValueError("encrypted_blob must not be empty.")
         return cleaned
+
+    @field_validator("private_key")
+    @classmethod
+    def validate_private_key(cls, value: str) -> str:
+        cleaned = value.strip()
+        if not cleaned:
+            raise ValueError("private_key must not be empty.")
+        return cleaned
+
+    @field_validator("public_id")
+    @classmethod
+    def validate_public_id(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        cleaned = value.strip()
+        return cleaned or None
 
 
 class VerifyResponse(BaseModel):

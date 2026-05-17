@@ -482,6 +482,81 @@
       width: 100%;
     }
 
+    /* Private Key Input */
+    .key-input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 20px;
+    }
+
+    .key-input-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .key-input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .key-input {
+      width: 100%;
+      padding: 11px 44px 11px 14px;
+      font-size: 14px;
+      font-family: 'IBM Plex Mono', monospace;
+      border: 1px solid var(--slate-200);
+      border-radius: var(--radius-md);
+      background: var(--slate-50);
+      color: var(--text-primary);
+      outline: none;
+      transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+      letter-spacing: 0.04em;
+    }
+
+    .key-input:focus {
+      border-color: var(--blue-500);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+      background: #ffffff;
+    }
+
+    .key-input::placeholder {
+      color: var(--slate-400);
+      letter-spacing: 0;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .key-toggle-btn {
+      position: absolute;
+      right: 12px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--slate-400);
+      display: flex;
+      align-items: center;
+      padding: 4px;
+      border-radius: 4px;
+      transition: color var(--transition-fast);
+    }
+
+    .key-toggle-btn:hover {
+      color: var(--blue-500);
+    }
+
+    .key-hint {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      line-height: 1.4;
+    }
+
     .hidden {
       display: none !important;
     }
@@ -507,13 +582,36 @@
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
         <h2 class="card-title" style="margin-bottom: 0;">Scan QR Tag</h2>
         <span class="badge">
-          <i data-lucide="lock" style="width:12px;height:12px;color:var(--blue-400)"></i>
+          <i data-lucide="key-round" style="width:12px;height:12px;color:var(--blue-400)"></i>
           AES-256-GCM
         </span>
       </div>
       <p class="card-description">
-        Align the secure QR code within the camera frame to initiate dynamic validation and cryptographic checks.
+        Enter your private key, then align the secure QR code within the camera frame to decrypt and verify the asset.
       </p>
+
+      <!-- Private Key Input -->
+      <div class="key-input-group">
+        <label class="key-input-label" for="private-key-input">
+          <i data-lucide="lock" style="width:12px;height:12px;"></i>
+          Private Key
+        </label>
+        <div class="key-input-wrapper">
+          <input
+            id="private-key-input"
+            type="password"
+            class="key-input"
+            placeholder="Enter your decryption key…"
+            autocomplete="off"
+            spellcheck="false"
+            autofocus
+          />
+          <button id="key-toggle-btn" type="button" class="key-toggle-btn" title="Show / hide key">
+            <i id="key-toggle-icon" data-lucide="eye" style="width:16px;height:16px;"></i>
+          </button>
+        </div>
+        <span class="key-hint">Required to decrypt the scanned QR. Must match the key set during asset registration.</span>
+      </div>
 
       <!-- Scanner Box -->
       <div id="scanner-box" class="scanner-wrapper">
@@ -574,6 +672,9 @@
     const activeControls = document.getElementById("active-controls");
     const statusBar = document.getElementById("status-bar");
     const statusText = document.getElementById("status-text");
+    const privateKeyInput = document.getElementById("private-key-input");
+    const keyToggleBtn = document.getElementById("key-toggle-btn");
+    const keyToggleIcon = document.getElementById("key-toggle-icon");
 
     const modalEl = document.getElementById("modal");
     const modalIcon = document.getElementById("modal-icon");
@@ -590,6 +691,18 @@
 
     // Initialize Lucide Icons
     lucide.createIcons();
+
+    window.addEventListener("load", () => {
+      privateKeyInput.focus();
+    });
+
+    // ── Private key show/hide toggle ──────────────────────────────────
+    keyToggleBtn.addEventListener("click", () => {
+      const isPassword = privateKeyInput.type === "password";
+      privateKeyInput.type = isPassword ? "text" : "password";
+      keyToggleIcon.setAttribute("data-lucide", isPassword ? "eye-off" : "eye");
+      lucide.createIcons();
+    });
 
     function updateStatus(message, state = "inactive") {
       statusText.textContent = message;
@@ -668,15 +781,54 @@
       return userLocation;
     }
 
-    async function verifyEncryptedBlob(encryptedBlob, location) {
+    function parseQrPayload(decodedText) {
+      const raw = String(decodedText || "").trim();
+      if (!raw) {
+        return { encryptedBlob: "", publicId: "" };
+      }
+
+      try {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === "object") {
+          const encryptedBlob = String(parsed.encrypted_blob || "").trim();
+          const publicId = String(parsed.public_id || "").trim();
+          if (encryptedBlob) {
+            return { encryptedBlob, publicId };
+          }
+        }
+      } catch {
+        // Fallback to raw QR payload when it's not JSON
+      }
+
+      return { encryptedBlob: raw, publicId: "" };
+    }
+
+    async function verifyEncryptedBlob(encryptedBlob, publicId, location) {
+      const privateKey = privateKeyInput.value.trim();
+
+      if (!privateKey) {
+        throw new Error("No private key entered. Please enter your decryption key before scanning.");
+      }
+
+      if (!encryptedBlob) {
+        throw new Error("QR payload missing encrypted blob.");
+      }
+
+      const body = {
+        encrypted_blob: encryptedBlob,
+        private_key: privateKey,
+        user_lat: location.latitude,
+        user_lon: location.longitude
+      };
+
+      if (publicId) {
+        body.public_id = publicId;
+      }
+
       const response = await fetch("/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          encrypted_blob: encryptedBlob,
-          user_lat: location.latitude,
-          user_lon: location.longitude
-        })
+        body: JSON.stringify(body)
       });
 
       const payload = await response.json().catch(() => ({}));
@@ -691,15 +843,27 @@
       const message = String(rawMessage || "").trim();
       const lowered = message.toLowerCase();
 
+      if (lowered.includes("no private key")) {
+        return message; // pass through verbatim — user-actionable
+      }
+
+      if (lowered.includes("invalid private key") || lowered.includes("decryption failed")) {
+        return "Wrong Key: The private key you entered does not match this QR code.";
+      }
+
+      if (lowered.includes("public id") || lowered.includes("qr data")) {
+        return "QR mismatch: The scanned code does not match the asset metadata.";
+      }
+
       if (lowered.includes("outside the authorized scanning zone") || lowered.includes("outside the area")) {
-        return "Access Blocked: Target asset geofence violation.";
+        return "Access Blocked: You are outside the authorized scanning zone for this asset.";
       }
 
       if (lowered.includes("maximum scanning limit reached") || lowered.includes("invalid qr")) {
-        return "Revoked QR: Maximum scans exceeded or key mismatch.";
+        return "Revoked QR: Maximum scan limit has been reached for this asset.";
       }
 
-      return message || "Security Warning: Invalid signature.";
+      return message || "Security Warning: Verification failed.";
     }
 
     function normalizeStartupError(error) {
@@ -731,8 +895,9 @@
 
       try {
         updateStatus("Signature captured. Verifying geolocation...", "active");
+        const qrPayload = parseQrPayload(decodedText);
         const location = await ensureFreshLocation();
-        const payload = await verifyEncryptedBlob(decodedText, location);
+        const payload = await verifyEncryptedBlob(qrPayload.encryptedBlob, qrPayload.publicId, location);
 
         await stopScanner();
         

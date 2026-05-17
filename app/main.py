@@ -1,3 +1,4 @@
+import json
 import math
 import os
 import uuid
@@ -219,7 +220,13 @@ def ingest_assets(payload: IngestRequest, db: Session = Depends(get_db)) -> Inge
             qr_filename = f"{public_id}.png"
             qr_path = QR_DIR / qr_filename
 
-            save_qr_image(encrypted_blob, qr_path)
+            qr_payload = json.dumps(
+                {"public_id": public_id, "encrypted_blob": encrypted_blob},
+                separators=(",", ":"),
+                ensure_ascii=True,
+            )
+
+            save_qr_image(qr_payload, qr_path)
 
             record = AssetRecord(
                 public_id=public_id,
@@ -399,61 +406,107 @@ def download_template():
 
 @app.post("/verify", response_model=VerifyResponse)
 def verify_asset(payload: VerifyRequest, db: Session = Depends(get_db)) -> VerifyResponse:
+    # ── Step 1: Look up the record by public_id (preferred) or encrypted_blob ──
     try:
-        record = db.execute(
-            select(AssetRecord)
-            .where(AssetRecord.encrypted_blob == payload.encrypted_blob)
-            .with_for_update()
-        ).scalar_one_or_none()
+        if payload.public_id:
+            record = db.execute(
+                select(AssetRecord).where(AssetRecord.public_id == payload.public_id)
+            ).scalar_one_or_none()
+        else:
+            record = db.execute(
+                select(AssetRecord).where(AssetRecord.encrypted_blob == payload.encrypted_blob)
+            ).scalar_one_or_none()
     except SQLAlchemyError as exc:
         raise HTTPException(status_code=500, detail="Database connection error during verification.") from exc
 
     if record is None:
         raise HTTPException(status_code=404, detail="Security Warning: QR token was not found.")
 
+    if payload.public_id and payload.encrypted_blob != record.encrypted_blob:
+        raise HTTPException(status_code=400, detail="QR data does not match the provided public ID.")
+
+    # ── Step 2: Decrypt using the user-supplied private key ──
+    # The key is derived via SHA-256(private_key) — same derivation used at ingest time.
+    # AES-GCM authentication will reject any wrong key automatically.
     try:
         decrypted_id = decrypt_identifier(
             encrypted_blob_b64=record.encrypted_blob,
-            key_b64=record.secret_key,
+            key_b64=None,               # derived from user's private key below
             nonce_b64=record.nonce,
+            private_key=payload.private_key,
         )
-    except DecryptionError as exc:
+    except DecryptionError:
         db.rollback()
-        raise HTTPException(status_code=400, detail="Security Warning: QR token appears tampered.") from exc
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid private key. Decryption failed.",
+        )
 
-    scan_count = record.scan_count or 0
-    max_scans = record.max_scans or 1
+    if decrypted_id != record.original_id:
+        db.rollback()
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid private key. Decrypted asset ID does not match the QR record.",
+        )
+
+    # ── Step 3: Resolve decrypted asset ID to a DB record ──
+    try:
+        asset_record = db.execute(
+            select(AssetRecord)
+            .where(AssetRecord.original_id == decrypted_id)
+            .with_for_update()
+        ).scalar_one_or_none()
+    except SQLAlchemyError as exc:
+        raise HTTPException(status_code=500, detail="Database connection error during verification.") from exc
+
+    if asset_record is None:
+        db.rollback()
+        raise HTTPException(status_code=404, detail="Decrypted asset ID was not found.")
+
+    if payload.public_id and asset_record.public_id != payload.public_id:
+        db.rollback()
+        raise HTTPException(status_code=400, detail="Decrypted asset does not match the provided public ID.")
+
+    if asset_record.encrypted_blob != payload.encrypted_blob:
+        db.rollback()
+        raise HTTPException(status_code=400, detail="Decrypted asset does not match the QR data.")
+
+    # ── Step 4: Check scan limit ──
+    scan_count = asset_record.scan_count or 0
+    max_scans = asset_record.max_scans or 1
 
     if scan_count >= max_scans:
         db.rollback()
-        raise HTTPException(status_code=403, detail="Invalid QR.")
+        raise HTTPException(status_code=403, detail="Maximum scanning limit reached for this QR.")
 
-    if record.lat is not None and record.lon is not None:
+    # ── Step 5: Geofence check (lat/lon already on the same record) ──
+    if asset_record.lat is not None and asset_record.lon is not None:
         distance_meters = _haversine_distance_meters(
-            lat1=float(record.lat),
-            lon1=float(record.lon),
+            lat1=float(asset_record.lat),
+            lon1=float(asset_record.lon),
             lat2=payload.user_lat,
             lon2=payload.user_lon,
         )
-        radius_meters = record.radius_meters or 100
+        radius_meters = asset_record.radius_meters or 100
 
         if distance_meters > radius_meters:
             db.rollback()
             raise HTTPException(
                 status_code=403,
-                detail="Outside the area.",
+                detail="Outside the authorized scanning zone.",
             )
 
+    # ── Step 6: Increment scan count and commit ──
     try:
-        record.scan_count = scan_count + 1
+        asset_record.scan_count = scan_count + 1
         db.commit()
     except SQLAlchemyError as exc:
         db.rollback()
         raise HTTPException(status_code=500, detail="Database error while updating scan count.") from exc
 
     return VerifyResponse(
-        public_id=record.public_id,
+        public_id=asset_record.public_id,
         original_id=decrypted_id,
-        scan_count=record.scan_count,
+        scan_count=asset_record.scan_count,
         max_scans=max_scans,
     )
