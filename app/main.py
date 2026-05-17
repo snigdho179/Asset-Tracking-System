@@ -330,7 +330,7 @@ def delete_all_assets(
     db: Session = Depends(get_db),
 ) -> AssetDeleteResponse:
     try:
-        db.execute(delete(AssetRecord))
+        db.execute(delete(AssetRecord).where(AssetRecord.id >= 0))
         db.commit()
     except SQLAlchemyError as exc:
         db.rollback()

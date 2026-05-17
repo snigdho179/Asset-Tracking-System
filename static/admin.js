@@ -1424,6 +1424,9 @@ if (confirmResetBtn) {
 
       showIdManagerBanner("Database has been successfully reset.", "success");
       await refreshManagedAssets(assetSearchInput.value);
+      state.results = [];
+      renderResults();
+      setRows([{}]);
       closeResetDbModal();
     } catch (err) {
       showIdManagerBanner(err.message || "Failed to reset database.", "error");
