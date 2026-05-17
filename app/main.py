@@ -451,4 +451,9 @@ def verify_asset(payload: VerifyRequest, db: Session = Depends(get_db)) -> Verif
         db.rollback()
         raise HTTPException(status_code=500, detail="Database error while updating scan count.") from exc
 
-    return VerifyResponse(public_id=record.public_id, original_id=decrypted_id)
+    return VerifyResponse(
+        public_id=record.public_id,
+        original_id=decrypted_id,
+        scan_count=record.scan_count,
+        max_scans=max_scans,
+    )

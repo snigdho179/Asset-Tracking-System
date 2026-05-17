@@ -602,9 +602,20 @@
       }
     }
 
-    function showModal(title, message, isSuccess) {
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function showModal(title, message, isSuccess, isHtml = false) {
       modalTitleEl.textContent = title;
-      modalMessageEl.textContent = message;
+      
+      if (isHtml) {
+        modalMessageEl.innerHTML = message;
+      } else {
+        modalMessageEl.textContent = message;
+      }
 
       modalTitleEl.className = "modal-title " + (isSuccess ? "success" : "error");
       modalIcon.className = "modal-icon " + (isSuccess ? "success" : "error");
@@ -724,12 +735,23 @@
         const payload = await verifyEncryptedBlob(decodedText, location);
 
         await stopScanner();
-        showModal("Authorized Access", `Decrypted ID: ${payload.original_id}`, true);
+        
+        const msgHtml = `
+          <div style="font-weight: 500; font-size: 13px; color: var(--text-secondary); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em; font-family: 'Inter', sans-serif;">Verified Asset ID</div>
+          <div class="mono" style="font-size: 16px; font-weight: 700; margin-bottom: 20px; background: var(--slate-100); padding: 10px 14px; border-radius: var(--radius-md); border: 1px solid var(--border-color); color: var(--text-primary); word-break: break-all;">${escapeHtml(payload.original_id)}</div>
+          
+          <div style="display: flex; justify-content: space-between; align-items: center; font-size: 14px; border-top: 1px solid var(--border-color); padding-top: 16px; font-family: 'Inter', sans-serif;">
+            <span style="color: var(--text-secondary); font-weight: 500;">Verification Scan</span>
+            <span style="font-weight: 700; color: var(--blue-600); background: var(--blue-50); border: 1px solid var(--blue-100); padding: 4px 10px; border-radius: var(--radius-full); font-size: 13px;">${payload.scan_count} / ${payload.max_scans}</span>
+          </div>
+        `;
+        
+        showModal("Authorized Access", msgHtml, true, true);
         updateStatus("Signature verified successfully.", "inactive");
       } catch (error) {
         await stopScanner();
         const userMessage = normalizeVerificationErrorMessage(error && error.message);
-        showModal("Security Block", userMessage, false);
+        showModal("Security Block", userMessage, false, false);
         updateStatus(userMessage, "error");
       } finally {
         setTimeout(() => {

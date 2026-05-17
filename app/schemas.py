@@ -134,6 +134,8 @@ class VerifyResponse(BaseModel):
     verified: bool = True
     public_id: str
     original_id: str
+    scan_count: int
+    max_scans: int
 
 
 class LoginRequest(BaseModel):
