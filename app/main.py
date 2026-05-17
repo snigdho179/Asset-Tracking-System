@@ -547,6 +547,7 @@ def verify_asset(payload: VerifyRequest, db: Session = Depends(get_db)) -> Verif
     return VerifyResponse(
         public_id=asset_record.public_id,
         original_id=decrypted_id,
+        description=asset_record.description,
         scan_count=asset_record.scan_count,
         max_scans=max_scans,
     )

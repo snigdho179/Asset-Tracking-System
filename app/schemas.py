@@ -195,6 +195,7 @@ class VerifyResponse(BaseModel):
     verified: bool = True
     public_id: str
     original_id: str
+    description: str | None = None
     scan_count: int
     max_scans: int
 
