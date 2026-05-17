@@ -73,7 +73,6 @@ const loadingText   = document.getElementById("loading-text");
 const banner        = document.getElementById("banner");
 const resultsSection = document.getElementById("results-section");
 const resultsBody   = document.getElementById("results-body");
-const downloadAllPdfBtn = document.getElementById("download-all-pdf-btn");
 const downloadSourcePdfBtn = document.getElementById("download-source-pdf-btn");
 
 // Modal
@@ -1344,31 +1343,6 @@ recentIdsBody.addEventListener("click", async (e) => {
 });
 
 generateBtn.addEventListener("click", submitIngestion);
-
-downloadAllPdfBtn.addEventListener("click", async () => {
-  if (!state.results.length) {
-    showBanner("No generated QRs available to export yet.", "error");
-    return;
-  }
-
-  const originalLabel = downloadAllPdfBtn.innerHTML;
-  downloadAllPdfBtn.disabled = true;
-  downloadAllPdfBtn.textContent = "Preparing PDF...";
-
-  try {
-    await downloadAllAssetTagsPdf(state.results);
-    showBanner(
-      "Batch PDF downloaded: " + state.results.length + " encrypted QR(s), 6 per page.",
-      "success"
-    );
-  } catch (err) {
-    showBanner(err.message || "Batch PDF generation failed.", "error");
-  } finally {
-    downloadAllPdfBtn.disabled = false;
-    downloadAllPdfBtn.innerHTML = originalLabel;
-    lucide.createIcons();
-  }
-});
 
 if (downloadSourcePdfBtn) {
   downloadSourcePdfBtn.addEventListener("click", async () => {
