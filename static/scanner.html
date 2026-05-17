@@ -679,9 +679,11 @@
           const location = await ensureFreshLocation();
           const payload = await verifyEncryptedBlob(decodedText, location);
           
+          await stopScanner();
           showModal("Authorized Access", `Decrypted ID: ${payload.original_id}`, true);
-          updateStatus("Signature verified successfully.", "active");
+          updateStatus("Signature verified successfully.", "inactive");
         } catch (error) {
+          await stopScanner();
           const userMessage = normalizeVerificationErrorMessage(error && error.message);
           showModal("Security Block", userMessage, false);
           updateStatus(userMessage, "error");
