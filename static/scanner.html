@@ -1,810 +1,840 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Asset QR Scanner — Verification Portal</title>
-    <meta name="description" content="Secure asset scanner and QR code verification portal." />
-    <!-- Load library and icons -->
-    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
 
-    <style>
-      /* ═══════════════════════════════════════════════════════════════
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Asset QR Scanner — Verification Portal</title>
+  <meta name="description" content="Secure asset scanner and QR code verification portal." />
+  <!-- Load library and icons -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet" />
+
+  <style>
+    /* ═══════════════════════════════════════════════════════════════
          DESIGN SYSTEM — CSS Custom Properties (Matched with admin.html)
          ═══════════════════════════════════════════════════════════════ */
-      :root {
-        --blue-50: #eff6ff;
-        --blue-100: #dbeafe;
-        --blue-200: #bfdbfe;
-        --blue-500: #3b82f6;
-        --blue-600: #2563eb;
-        --blue-700: #1d4ed8;
-        --blue-800: #1e40af;
-        --blue-900: #1e3a8a;
+    :root {
+      --blue-50: #eff6ff;
+      --blue-100: #dbeafe;
+      --blue-200: #bfdbfe;
+      --blue-500: #3b82f6;
+      --blue-600: #2563eb;
+      --blue-700: #1d4ed8;
+      --blue-800: #1e40af;
+      --blue-900: #1e3a8a;
 
-        --slate-50: #f8fafc;
-        --slate-100: #f1f5f9;
-        --slate-200: #e2e8f0;
-        --slate-300: #cbd5e1;
-        --slate-400: #94a3b8;
-        --slate-500: #64748b;
-        --slate-600: #475569;
-        --slate-700: #334155;
-        --slate-800: #1e293b;
-        --slate-900: #0f172a;
+      --slate-50: #f8fafc;
+      --slate-100: #f1f5f9;
+      --slate-200: #e2e8f0;
+      --slate-300: #cbd5e1;
+      --slate-400: #94a3b8;
+      --slate-500: #64748b;
+      --slate-600: #475569;
+      --slate-700: #334155;
+      --slate-800: #1e293b;
+      --slate-900: #0f172a;
 
-        --emerald-50: #ecfdf5;
-        --emerald-100: #d1fae5;
-        --emerald-500: #10b981;
-        --emerald-600: #059669;
-        --emerald-700: #047857;
+      --emerald-50: #ecfdf5;
+      --emerald-100: #d1fae5;
+      --emerald-500: #10b981;
+      --emerald-600: #059669;
+      --emerald-700: #047857;
 
-        --rose-50: #fff1f2;
-        --rose-100: #ffe4e6;
-        --rose-500: #f43f5e;
-        --rose-600: #e11d48;
-        --rose-700: #be123c;
+      --rose-50: #fff1f2;
+      --rose-100: #ffe4e6;
+      --rose-500: #f43f5e;
+      --rose-600: #e11d48;
+      --rose-700: #be123c;
 
-        --bg-body: var(--slate-50);
-        --bg-card: #ffffff;
-        --border-color: var(--slate-200);
+      --bg-body: var(--slate-50);
+      --bg-card: #ffffff;
+      --border-color: var(--slate-200);
 
-        --text-primary: var(--slate-900);
-        --text-secondary: var(--slate-600);
-        --text-tertiary: var(--slate-400);
+      --text-primary: var(--slate-900);
+      --text-secondary: var(--slate-600);
+      --text-tertiary: var(--slate-400);
 
-        --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
-        --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.06), 0 2px 4px -2px rgba(0,0,0,0.06);
-        --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.07), 0 4px 6px -4px rgba(0,0,0,0.07);
-        --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.08), 0 8px 10px -6px rgba(0,0,0,0.06);
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.06), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.07), 0 4px 6px -4px rgba(0, 0, 0, 0.07);
+      --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.06);
 
-        --radius-sm: 8px;
-        --radius-md: 12px;
-        --radius-lg: 16px;
-        --radius-xl: 20px;
-        --radius-full: 9999px;
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 20px;
+      --radius-full: 9999px;
 
-        --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
-        --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-body);
+      color: var(--text-primary);
+      line-height: 1.6;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    .mono {
+      font-family: 'IBM Plex Mono', monospace;
+    }
+
+    /* Container */
+    .app-container {
+      width: 100%;
+      max-width: 480px;
+      z-index: 2;
+      animation: fadeIn 0.5s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(15px);
       }
 
-      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-      body {
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-        background: var(--bg-body);
-        color: var(--text-primary);
-        line-height: 1.6;
-        min-height: 100vh;
-        -webkit-font-smoothing: antialiased;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: flex-start;
-        padding: 40px 24px;
-        position: relative;
-        overflow-x: hidden;
-      }
-
-      .mono { font-family: 'IBM Plex Mono', monospace; }
-
-      /* Container */
-      .app-container {
-        width: 100%;
-        max-width: 480px;
-        z-index: 2;
-        animation: fadeIn 0.5s ease-out;
-      }
-
-      @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(15px); }
-        to { opacity: 1; transform: translateY(0); }
-      }
-
-      /* Card (Admin-style matching) */
-      .card {
-        background: var(--bg-card);
-        border: 1px solid var(--border-color);
-        border-radius: var(--radius-xl);
-        padding: 32px;
-        box-shadow: var(--shadow-lg);
-        margin-top: 16px;
-      }
-
-      .brand-header {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        justify-content: center;
-        margin-bottom: 24px;
-      }
-
-      .brand-logo {
-        width: 42px;
-        height: 42px;
-        background: linear-gradient(135deg, var(--blue-500), var(--blue-700));
-        border-radius: var(--radius-md);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 0 4px 12px rgba(37,99,235,0.15);
-      }
-
-      .brand-logo svg { color: white; width: 22px; height: 22px; }
-
-      .brand-text h1 {
-        font-size: 20px;
-        font-weight: 800;
-        letter-spacing: -0.02em;
-        color: var(--text-primary);
-      }
-
-      .brand-text p {
-        font-size: 11px;
-        text-transform: uppercase;
-        letter-spacing: 0.15em;
-        color: var(--blue-600);
-        font-weight: 700;
-      }
-
-      .card-title {
-        font-size: 18px;
-        font-weight: 700;
-        margin-bottom: 8px;
-        color: var(--text-primary);
-      }
-
-      .card-description {
-        font-size: 13px;
-        color: var(--text-secondary);
-        margin-bottom: 24px;
-        line-height: 1.5;
-      }
-
-      /* Buttons */
-      .btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        padding: 12px 24px;
-        font-size: 14px;
-        font-weight: 600;
-        border-radius: var(--radius-md);
-        border: 1px solid transparent;
-        cursor: pointer;
-        transition: all var(--transition-fast);
-        width: 100%;
-      }
-
-      .btn-primary {
-        background: var(--blue-600);
-        color: #ffffff;
-        box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
-      }
-
-      .btn-primary:hover {
-        background: var(--blue-700);
-        transform: translateY(-1px);
-        box-shadow: 0 6px 18px rgba(37, 99, 235, 0.35);
-      }
-
-      .btn-primary:active {
+      to {
+        opacity: 1;
         transform: translateY(0);
       }
+    }
 
-      .btn-secondary {
-        background: var(--slate-100);
-        border-color: var(--slate-200);
-        color: var(--text-primary);
+    /* Card (Admin-style matching) */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-xl);
+      padding: 32px;
+      box-shadow: var(--shadow-lg);
+      margin-top: 16px;
+    }
+
+    .brand-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      justify-content: center;
+      margin-bottom: 24px;
+    }
+
+    .brand-logo {
+      width: 42px;
+      height: 42px;
+      background: linear-gradient(135deg, var(--blue-500), var(--blue-700));
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+    }
+
+    .brand-logo svg {
+      color: white;
+      width: 22px;
+      height: 22px;
+    }
+
+    .brand-text h1 {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--text-primary);
+    }
+
+    .brand-text p {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--blue-600);
+      font-weight: 700;
+    }
+
+    .card-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: var(--text-primary);
+    }
+
+    .card-description {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 24px;
+      line-height: 1.5;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 24px;
+      font-size: 14px;
+      font-weight: 600;
+      border-radius: var(--radius-md);
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      width: 100%;
+    }
+
+    .btn-primary {
+      background: var(--blue-600);
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
+    }
+
+    .btn-primary:hover {
+      background: var(--blue-700);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(37, 99, 235, 0.35);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+
+    .btn-secondary {
+      background: var(--slate-100);
+      border-color: var(--slate-200);
+      color: var(--text-primary);
+    }
+
+    .btn-secondary:hover {
+      background: var(--slate-200);
+    }
+
+    .btn-danger {
+      background: var(--rose-600);
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(225, 29, 72, 0.25);
+    }
+
+    .btn-danger:hover {
+      background: var(--rose-700);
+    }
+
+    /* Badges & Chips */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: var(--radius-full);
+      font-size: 12px;
+      font-weight: 600;
+      background: var(--blue-50);
+      border: 1px solid var(--blue-100);
+      color: var(--blue-700);
+    }
+
+    /* Scanner Box & Placeholders */
+    .scanner-wrapper {
+      position: relative;
+      width: 100%;
+      background: var(--slate-50);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--slate-200);
+      overflow: hidden;
+      margin-bottom: 20px;
+      aspect-ratio: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: border-color var(--transition-base);
+    }
+
+    .scanner-wrapper.active {
+      border-color: var(--blue-500);
+      box-shadow: 0 0 25px rgba(59, 130, 246, 0.15);
+    }
+
+    #reader {
+      width: 100% !important;
+      height: 100% !important;
+      border: none !important;
+    }
+
+    #reader video {
+      object-fit: cover !important;
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    /* Custom Camera Placeholder design */
+    .camera-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 32px;
+      z-index: 10;
+      transition: opacity var(--transition-fast);
+    }
+
+    .camera-placeholder.hidden {
+      display: none;
+    }
+
+    .placeholder-icon {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: rgba(59, 130, 246, 0.08);
+      border: 1px solid rgba(59, 130, 246, 0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+      color: var(--blue-500);
+      animation: pulseGlow 2s infinite ease-in-out;
+    }
+
+    @keyframes pulseGlow {
+
+      0%,
+      100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.1);
       }
 
-      .btn-secondary:hover {
-        background: var(--slate-200);
+      50% {
+        transform: scale(1.05);
+        box-shadow: 0 0 20px 4px rgba(59, 130, 246, 0.15);
       }
+    }
 
-      .btn-danger {
-        background: var(--rose-600);
-        color: #ffffff;
-        box-shadow: 0 4px 14px rgba(225, 29, 72, 0.25);
-      }
+    .placeholder-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+    }
 
-      .btn-danger:hover {
-        background: var(--rose-700);
-      }
+    .placeholder-desc {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-bottom: 24px;
+      max-width: 240px;
+      line-height: 1.5;
+    }
 
-      /* Badges & Chips */
-      .badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 6px 12px;
-        border-radius: var(--radius-full);
-        font-size: 12px;
-        font-weight: 600;
-        background: var(--blue-50);
-        border: 1px solid var(--blue-100);
-        color: var(--blue-700);
-      }
+    /* Live indicator status */
+    .status-bar {
+      width: 100%;
+      background: var(--slate-50);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--slate-200);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 16px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      transition: all var(--transition-fast);
+    }
 
-      /* Scanner Box & Placeholders */
-      .scanner-wrapper {
-        position: relative;
-        width: 100%;
-        background: var(--slate-50);
-        border-radius: var(--radius-lg);
-        border: 1px solid var(--slate-200);
-        overflow: hidden;
-        margin-bottom: 20px;
-        aspect-ratio: 1;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        transition: border-color var(--transition-base);
-      }
+    .status-indicator {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--slate-400);
+    }
 
-      .scanner-wrapper.active {
-        border-color: var(--blue-500);
-        box-shadow: 0 0 25px rgba(59, 130, 246, 0.15);
-      }
+    .status-bar.active .status-indicator {
+      background: var(--emerald-500);
+      box-shadow: 0 0 10px var(--emerald-500);
+      animation: blink 1.5s infinite;
+    }
 
-      #reader {
-        width: 100% !important;
-        height: 100% !important;
-        border: none !important;
-      }
+    .status-bar.error .status-indicator {
+      background: var(--rose-500);
+      box-shadow: 0 0 10px var(--rose-500);
+    }
 
-      #reader video {
-        object-fit: cover !important;
-        width: 100% !important;
-        height: 100% !important;
-      }
+    @keyframes blink {
 
-      /* Custom Camera Placeholder design */
-      .camera-placeholder {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-        padding: 32px;
-        z-index: 10;
-        transition: opacity var(--transition-fast);
-      }
-
-      .camera-placeholder.hidden {
-        display: none;
-      }
-
-      .placeholder-icon {
-        width: 80px;
-        height: 80px;
-        border-radius: 50%;
-        background: rgba(59, 130, 246, 0.08);
-        border: 1px solid rgba(59, 130, 246, 0.15);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-bottom: 20px;
-        color: var(--blue-500);
-        animation: pulseGlow 2s infinite ease-in-out;
-      }
-
-      @keyframes pulseGlow {
-        0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.1); }
-        50% { transform: scale(1.05); box-shadow: 0 0 20px 4px rgba(59, 130, 246, 0.15); }
-      }
-
-      .placeholder-title {
-        font-size: 15px;
-        font-weight: 700;
-        color: var(--text-primary);
-        margin-bottom: 6px;
-      }
-
-      .placeholder-desc {
-        font-size: 12px;
-        color: var(--text-secondary);
-        margin-bottom: 24px;
-        max-width: 240px;
-        line-height: 1.5;
-      }
-
-      /* Live indicator status */
-      .status-bar {
-        width: 100%;
-        background: var(--slate-50);
-        border-radius: var(--radius-md);
-        border: 1px solid var(--slate-200);
-        padding: 12px 16px;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        margin-top: 16px;
-        font-size: 13px;
-        color: var(--text-secondary);
-        transition: all var(--transition-fast);
-      }
-
-      .status-indicator {
-        width: 10px;
-        height: 10px;
-        border-radius: 50%;
-        background: var(--slate-400);
-      }
-
-      .status-bar.active .status-indicator {
-        background: var(--emerald-500);
-        box-shadow: 0 0 10px var(--emerald-500);
-        animation: blink 1.5s infinite;
-      }
-
-      .status-bar.error .status-indicator {
-        background: var(--rose-500);
-        box-shadow: 0 0 10px var(--rose-500);
-      }
-
-      @keyframes blink {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.4; }
-      }
-
-      /* Modal Design System */
-      .modal-overlay {
-        position: fixed;
-        inset: 0;
-        z-index: 1000;
-        display: none;
-        align-items: center;
-        justify-content: center;
-        background: rgba(15, 23, 42, 0.45);
-        backdrop-filter: blur(8px);
-        padding: 24px;
-        opacity: 0;
-        transition: opacity var(--transition-base);
-      }
-
-      .modal-overlay.visible {
-        display: flex;
+      0%,
+      100% {
         opacity: 1;
       }
 
-      .modal-card {
-        background: var(--bg-card);
-        border: 1px solid var(--border-color);
-        border-radius: var(--radius-xl);
-        padding: 32px;
-        width: 100%;
-        max-width: 400px;
-        box-shadow: var(--shadow-xl);
-        transform: scale(0.95);
-        transition: transform var(--transition-base);
-        text-align: center;
+      50% {
+        opacity: 0.4;
       }
+    }
 
-      .modal-overlay.visible .modal-card {
-        transform: scale(1);
-      }
+    /* Modal Design System */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(15, 23, 42, 0.45);
+      backdrop-filter: blur(8px);
+      padding: 24px;
+      opacity: 0;
+      transition: opacity var(--transition-base);
+    }
 
-      .modal-icon {
-        width: 64px;
-        height: 64px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 auto 20px;
-      }
+    .modal-overlay.visible {
+      display: flex;
+      opacity: 1;
+    }
 
-      .modal-icon.success {
-        background: rgba(16, 185, 129, 0.1);
-        color: var(--emerald-600);
-        border: 1px solid rgba(16, 185, 129, 0.2);
-      }
+    .modal-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-xl);
+      padding: 32px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: var(--shadow-xl);
+      transform: scale(0.95);
+      transition: transform var(--transition-base);
+      text-align: center;
+    }
 
-      .modal-icon.error {
-        background: rgba(244, 63, 94, 0.15);
-        color: var(--rose-600);
-        border: 1px solid rgba(244, 63, 94, 0.2);
-      }
+    .modal-overlay.visible .modal-card {
+      transform: scale(1);
+    }
 
-      .modal-title {
-        font-size: 20px;
-        font-weight: 800;
-        margin-bottom: 8px;
-        letter-spacing: -0.01em;
-      }
+    .modal-icon {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+    }
 
-      .modal-title.success { color: var(--emerald-600); }
-      .modal-title.error { color: var(--rose-600); }
+    .modal-icon.success {
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--emerald-600);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+    }
 
-      .modal-message {
-        font-size: 14px;
-        color: var(--text-secondary);
-        line-height: 1.6;
-        margin-bottom: 24px;
-        word-break: break-all;
-      }
+    .modal-icon.error {
+      background: rgba(244, 63, 94, 0.15);
+      color: var(--rose-600);
+      border: 1px solid rgba(244, 63, 94, 0.2);
+    }
 
-      /* Control Container */
-      .action-container {
-        display: flex;
-        gap: 12px;
-        width: 100%;
-      }
+    .modal-title {
+      font-size: 20px;
+      font-weight: 800;
+      margin-bottom: 8px;
+      letter-spacing: -0.01em;
+    }
 
-      .hidden {
-        display: none !important;
-      }
+    .modal-title.success {
+      color: var(--emerald-600);
+    }
 
-      /* Spacing optimizations for mobile/portrait screens */
-      @media (max-width: 480px) {
-        body {
-          padding: 24px 16px;
-        }
-        .card {
-          padding: 24px;
-          border-radius: var(--radius-lg);
-          margin-top: 8px;
-        }
-        .brand-header {
-          margin-bottom: 16px;
-        }
-      }
-    </style>
-  </head>
-  <body>
+    .modal-title.error {
+      color: var(--rose-600);
+    }
 
-    <div class="app-container">
-      <!-- Header -->
-      <header class="brand-header">
-        <div class="brand-logo">
-          <i data-lucide="shield-check"></i>
-        </div>
-        <div class="brand-text">
-          <h1>Asset Tracker</h1>
-          <p>Secure Verification Portal</p>
-        </div>
-      </header>
+    .modal-message {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 24px;
+      word-break: break-all;
+    }
 
-      <!-- Main Scanner Card -->
-      <main class="card">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-          <h2 class="card-title" style="margin-bottom: 0;">Scan QR Tag</h2>
-          <span class="badge">
-            <i data-lucide="lock" style="width:12px;height:12px;color:var(--blue-400)"></i>
-            AES-256-GCM
-          </span>
-        </div>
-        <p class="card-description">
-          Align the secure QR code within the camera frame to initiate dynamic validation and cryptographic checks.
-        </p>
+    /* Control Container */
+    .action-container {
+      display: flex;
+      gap: 12px;
+      width: 100%;
+    }
 
-        <!-- Scanner Box -->
-        <div id="scanner-box" class="scanner-wrapper">
-          <!-- Placeholder Screen -->
-          <div id="placeholder-screen" class="camera-placeholder">
-            <div class="placeholder-icon">
-              <i data-lucide="camera" style="width: 36px; height: 36px;"></i>
-            </div>
-            <h3 class="placeholder-title">Camera Scanner Offline</h3>
-            <p class="placeholder-desc">To verify secure QR tags, grant camera permissions and start scanning.</p>
-            <button id="start-scan-btn" type="button" class="btn btn-primary">
-              <i data-lucide="play" style="width: 16px; height: 16px;"></i>
-              Start Scanner
-            </button>
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="app-container">
+    <!-- Header -->
+    <header class="brand-header">
+      <div class="brand-logo">
+        <i data-lucide="shield-check"></i>
+      </div>
+      <div class="brand-text">
+        <h1>Asset Tracker</h1>
+        <p>Secure Verification Portal</p>
+      </div>
+    </header>
+
+    <!-- Main Scanner Card -->
+    <main class="card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h2 class="card-title" style="margin-bottom: 0;">Scan QR Tag</h2>
+        <span class="badge">
+          <i data-lucide="lock" style="width:12px;height:12px;color:var(--blue-400)"></i>
+          AES-256-GCM
+        </span>
+      </div>
+      <p class="card-description">
+        Align the secure QR code within the camera frame to initiate dynamic validation and cryptographic checks.
+      </p>
+
+      <!-- Scanner Box -->
+      <div id="scanner-box" class="scanner-wrapper">
+        <!-- Placeholder Screen -->
+        <div id="placeholder-screen" class="camera-placeholder">
+          <div class="placeholder-icon">
+            <i data-lucide="camera" style="width: 36px; height: 36px;"></i>
           </div>
-
-          <!-- HTML5 Scanner Container (Hidden initially) -->
-          <div id="reader" class="hidden"></div>
-        </div>
-
-        <!-- Stop Button (Hidden initially) -->
-        <div id="active-controls" class="action-container hidden">
-          <button id="stop-scan-btn" type="button" class="btn btn-secondary">
-            <i data-lucide="square" style="width:16px;height:16px;color:var(--rose-500);"></i>
-            Stop Camera Feed
+          <h3 class="placeholder-title">Camera Scanner Offline</h3>
+          <p class="placeholder-desc">To verify secure QR tags, grant camera permissions and start scanning.</p>
+          <button id="start-scan-btn" type="button" class="btn btn-primary">
+            <i data-lucide="play" style="width: 16px; height: 16px;"></i>
+            Start Scanner
           </button>
         </div>
 
-        <!-- Status Message Block -->
-        <div id="status-bar" class="status-bar">
-          <div class="status-indicator"></div>
-          <span id="status-text">Scanner is inactive.</span>
-        </div>
-      </main>
-    </div>
+        <!-- HTML5 Scanner Container (Hidden initially) -->
+        <div id="reader" class="hidden"></div>
+      </div>
 
-    <!-- Feedback Modal -->
-    <div id="modal" class="modal-overlay">
-      <div class="modal-card">
-        <div id="modal-icon" class="modal-icon success">
-          <i id="modal-icon-symbol" data-lucide="check-circle" style="width: 32px; height: 32px;"></i>
-        </div>
-        <h3 id="modal-title" class="modal-title success">Verified</h3>
-        <p id="modal-message" class="modal-message mono"></p>
-        <button id="close-modal" type="button" class="btn btn-primary">
-          Continue Verification
+      <!-- Stop Button (Hidden initially) -->
+      <div id="active-controls" class="action-container hidden">
+        <button id="stop-scan-btn" type="button" class="btn btn-secondary">
+          <i data-lucide="square" style="width:16px;height:16px;color:var(--rose-500);"></i>
+          Stop Camera Feed
         </button>
       </div>
+
+      <!-- Status Message Block -->
+      <div id="status-bar" class="status-bar">
+        <div class="status-indicator"></div>
+        <span id="status-text">Scanner is inactive.</span>
+      </div>
+    </main>
+  </div>
+
+  <!-- Feedback Modal -->
+  <div id="modal" class="modal-overlay">
+    <div class="modal-card">
+      <div id="modal-icon" class="modal-icon success">
+        <i id="modal-icon-symbol" data-lucide="check-circle" style="width: 32px; height: 32px;"></i>
+      </div>
+      <h3 id="modal-title" class="modal-title success">Verified</h3>
+      <p id="modal-message" class="modal-message mono"></p>
+      <button id="close-modal" type="button" class="btn btn-primary">
+        Continue Verification
+      </button>
     </div>
+  </div>
 
-    <script>
-      // DOM References
-      const startScanBtn = document.getElementById("start-scan-btn");
-      const stopScanBtn = document.getElementById("stop-scan-btn");
-      const placeholderScreen = document.getElementById("placeholder-screen");
-      const readerEl = document.getElementById("reader");
-      const scannerBox = document.getElementById("scanner-box");
-      const activeControls = document.getElementById("active-controls");
-      const statusBar = document.getElementById("status-bar");
-      const statusText = document.getElementById("status-text");
+  <script>
+    // DOM References
+    const startScanBtn = document.getElementById("start-scan-btn");
+    const stopScanBtn = document.getElementById("stop-scan-btn");
+    const placeholderScreen = document.getElementById("placeholder-screen");
+    const readerEl = document.getElementById("reader");
+    const scannerBox = document.getElementById("scanner-box");
+    const activeControls = document.getElementById("active-controls");
+    const statusBar = document.getElementById("status-bar");
+    const statusText = document.getElementById("status-text");
 
-      const modalEl = document.getElementById("modal");
-      const modalIcon = document.getElementById("modal-icon");
-      const modalIconSymbol = document.getElementById("modal-icon-symbol");
-      const modalTitleEl = document.getElementById("modal-title");
-      const modalMessageEl = document.getElementById("modal-message");
-      const closeModalBtn = document.getElementById("close-modal");
+    const modalEl = document.getElementById("modal");
+    const modalIcon = document.getElementById("modal-icon");
+    const modalIconSymbol = document.getElementById("modal-icon-symbol");
+    const modalTitleEl = document.getElementById("modal-title");
+    const modalMessageEl = document.getElementById("modal-message");
+    const closeModalBtn = document.getElementById("close-modal");
 
-      let scanner = null;
-      let isVerifying = false;
-      let lastScanValue = "";
-      let lastScanAt = 0;
-      let userLocation = null;
+    let scanner = null;
+    let isVerifying = false;
+    let lastScanValue = "";
+    let lastScanAt = 0;
+    let userLocation = null;
 
-      // Initialize Lucide Icons
+    // Initialize Lucide Icons
+    lucide.createIcons();
+
+    function updateStatus(message, state = "inactive") {
+      statusText.textContent = message;
+      statusBar.className = "status-bar";
+
+      if (state === "active") {
+        statusBar.classList.add("active");
+      } else if (state === "error") {
+        statusBar.classList.add("error");
+      }
+    }
+
+    function showModal(title, message, isSuccess) {
+      modalTitleEl.textContent = title;
+      modalMessageEl.textContent = message;
+
+      modalTitleEl.className = "modal-title " + (isSuccess ? "success" : "error");
+      modalIcon.className = "modal-icon " + (isSuccess ? "success" : "error");
+
+      // Update Modal Symbol Icon
+      modalIconSymbol.setAttribute("data-lucide", isSuccess ? "check-circle" : "alert-triangle");
       lucide.createIcons();
 
-      function updateStatus(message, state = "inactive") {
-        statusText.textContent = message;
-        statusBar.className = "status-bar";
-        
-        if (state === "active") {
-          statusBar.classList.add("active");
-        } else if (state === "error") {
-          statusBar.classList.add("error");
-        }
-      }
+      modalEl.classList.add("visible");
+    }
 
-      function showModal(title, message, isSuccess) {
-        modalTitleEl.textContent = title;
-        modalMessageEl.textContent = message;
+    function hideModal() {
+      modalEl.classList.remove("visible");
+    }
 
-        modalTitleEl.className = "modal-title " + (isSuccess ? "success" : "error");
-        modalIcon.className = "modal-icon " + (isSuccess ? "success" : "error");
-        
-        // Update Modal Symbol Icon
-        modalIconSymbol.setAttribute("data-lucide", isSuccess ? "check-circle" : "alert-triangle");
-        lucide.createIcons();
-
-        modalEl.classList.add("visible");
-      }
-
-      function hideModal() {
-        modalEl.classList.remove("visible");
-      }
-
-      function captureCurrentLocation() {
-        return new Promise((resolve, reject) => {
-          if (!navigator.geolocation) {
-            reject(new Error("Location access is required to verify this QR."));
-            return;
-          }
-
-          navigator.geolocation.getCurrentPosition(
-            (position) => {
-              resolve({
-                latitude: Number(position.coords.latitude),
-                longitude: Number(position.coords.longitude),
-                capturedAt: Date.now()
-              });
-            },
-            (error) => {
-              if (error.code === error.PERMISSION_DENIED) {
-                reject(new Error("Location access is required to verify this QR."));
-                return;
-              }
-              reject(new Error("Unable to retrieve location. Please enable GPS."));
-            },
-            { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
-          );
-        });
-      }
-
-      async function ensureFreshLocation() {
-        const locationAgeMs = userLocation ? Date.now() - userLocation.capturedAt : Number.POSITIVE_INFINITY;
-        if (locationAgeMs < 60000) {
-          return userLocation;
-        }
-
-        userLocation = await captureCurrentLocation();
-        return userLocation;
-      }
-
-      async function verifyEncryptedBlob(encryptedBlob, location) {
-        const response = await fetch("/verify", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            encrypted_blob: encryptedBlob,
-            user_lat: location.latitude,
-            user_lon: location.longitude
-          })
-        });
-
-        const payload = await response.json().catch(() => ({}));
-        if (!response.ok) {
-          throw new Error(payload.detail || "Security Warning: Verification failed.");
-        }
-
-        return payload;
-      }
-
-      function normalizeVerificationErrorMessage(rawMessage) {
-        const message = String(rawMessage || "").trim();
-        const lowered = message.toLowerCase();
-
-        if (lowered.includes("outside the authorized scanning zone") || lowered.includes("outside the area")) {
-          return "Access Blocked: Target asset geofence violation.";
-        }
-
-        if (lowered.includes("maximum scanning limit reached") || lowered.includes("invalid qr")) {
-          return "Revoked QR: Maximum scans exceeded or key mismatch.";
-        }
-
-        return message || "Security Warning: Invalid signature.";
-      }
-
-      function normalizeStartupError(error) {
-        const message = String((error && error.message) || error || "").trim();
-        const lowered = message.toLowerCase();
-
-        if (!window.isSecureContext && location.hostname !== "localhost" && location.hostname !== "127.0.0.1") {
-          return "Camera access blocked. Requires HTTPS connection.";
-        }
-
-        if (lowered.includes("permission") || lowered.includes("notallowederror") || lowered.includes("denied")) {
-          return "Camera access blocked. Please adjust your browser permissions.";
-        }
-
-        return message || "Could not load video input stream.";
-      }
-
-      async function onScanSuccess(decodedText) {
-        const now = Date.now();
-        if (isVerifying) return;
-
-        if (decodedText === lastScanValue && now - lastScanAt < 3000) {
+    function captureCurrentLocation() {
+      return new Promise((resolve, reject) => {
+        if (!navigator.geolocation) {
+          reject(new Error("Location access is required to verify this QR."));
           return;
         }
 
-        isVerifying = true;
-        lastScanValue = decodedText;
-        lastScanAt = now;
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            resolve({
+              latitude: Number(position.coords.latitude),
+              longitude: Number(position.coords.longitude),
+              capturedAt: Date.now()
+            });
+          },
+          (error) => {
+            if (error.code === error.PERMISSION_DENIED) {
+              reject(new Error("Location access is required to verify this QR."));
+              return;
+            }
+            reject(new Error("Unable to retrieve location. Please enable GPS."));
+          },
+          { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
+        );
+      });
+    }
 
-        try {
-          updateStatus("Signature captured. Verifying geolocation...", "active");
-          const location = await ensureFreshLocation();
-          const payload = await verifyEncryptedBlob(decodedText, location);
-          
-          await stopScanner();
-          showModal("Authorized Access", `Decrypted ID: ${payload.original_id}`, true);
-          updateStatus("Signature verified successfully.", "inactive");
-        } catch (error) {
-          await stopScanner();
-          const userMessage = normalizeVerificationErrorMessage(error && error.message);
-          showModal("Security Block", userMessage, false);
-          updateStatus(userMessage, "error");
-        } finally {
-          setTimeout(() => {
-            isVerifying = false;
-          }, 1500);
-        }
+    async function ensureFreshLocation() {
+      const locationAgeMs = userLocation ? Date.now() - userLocation.capturedAt : Number.POSITIVE_INFINITY;
+      if (locationAgeMs < 60000) {
+        return userLocation;
       }
 
-      function getResponsiveScannerConfig() {
-        const base = Math.min(window.innerWidth, window.innerHeight);
-        const qrSide = Math.max(180, Math.min(280, Math.floor(base * 0.5)));
-        const fps = window.innerWidth < 640 ? 10 : 12;
+      userLocation = await captureCurrentLocation();
+      return userLocation;
+    }
 
-        return {
-          fps,
-          qrbox: { width: qrSide, height: qrSide }
-        };
+    async function verifyEncryptedBlob(encryptedBlob, location) {
+      const response = await fetch("/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          encrypted_blob: encryptedBlob,
+          user_lat: location.latitude,
+          user_lon: location.longitude
+        })
+      });
+
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(payload.detail || "Security Warning: Verification failed.");
       }
 
-      async function startScanner() {
-        // Prepare HTML Container
-        placeholderScreen.classList.add("hidden");
-        readerEl.classList.remove("hidden");
-        scannerBox.classList.add("active");
-        activeControls.classList.remove("hidden");
+      return payload;
+    }
 
-        updateStatus("Initializing video stream...", "active");
+    function normalizeVerificationErrorMessage(rawMessage) {
+      const message = String(rawMessage || "").trim();
+      const lowered = message.toLowerCase();
 
-        if (!scanner) {
-          scanner = new Html5Qrcode("reader");
-        }
+      if (lowered.includes("outside the authorized scanning zone") || lowered.includes("outside the area")) {
+        return "Access Blocked: Target asset geofence violation.";
+      }
 
-        const config = getResponsiveScannerConfig();
+      if (lowered.includes("maximum scanning limit reached") || lowered.includes("invalid qr")) {
+        return "Revoked QR: Maximum scans exceeded or key mismatch.";
+      }
 
+      return message || "Security Warning: Invalid signature.";
+    }
+
+    function normalizeStartupError(error) {
+      const message = String((error && error.message) || error || "").trim();
+      const lowered = message.toLowerCase();
+
+      if (!window.isSecureContext && location.hostname !== "localhost" && location.hostname !== "127.0.0.1") {
+        return "Camera access blocked. Requires HTTPS connection.";
+      }
+
+      if (lowered.includes("permission") || lowered.includes("notallowederror") || lowered.includes("denied")) {
+        return "Camera access blocked. Please adjust your browser permissions.";
+      }
+
+      return message || "Could not load video input stream.";
+    }
+
+    async function onScanSuccess(decodedText) {
+      const now = Date.now();
+      if (isVerifying) return;
+
+      if (decodedText === lastScanValue && now - lastScanAt < 3000) {
+        return;
+      }
+
+      isVerifying = true;
+      lastScanValue = decodedText;
+      lastScanAt = now;
+
+      try {
+        updateStatus("Signature captured. Verifying geolocation...", "active");
+        const location = await ensureFreshLocation();
+        const payload = await verifyEncryptedBlob(decodedText, location);
+
+        await stopScanner();
+        showModal("Authorized Access", `Decrypted ID: ${payload.original_id}`, true);
+        updateStatus("Signature verified successfully.", "inactive");
+      } catch (error) {
+        await stopScanner();
+        const userMessage = normalizeVerificationErrorMessage(error && error.message);
+        showModal("Security Block", userMessage, false);
+        updateStatus(userMessage, "error");
+      } finally {
+        setTimeout(() => {
+          isVerifying = false;
+        }, 1500);
+      }
+    }
+
+    function getResponsiveScannerConfig() {
+      const base = Math.min(window.innerWidth, window.innerHeight);
+      const qrSide = Math.max(180, Math.min(280, Math.floor(base * 0.5)));
+      const fps = window.innerWidth < 640 ? 10 : 12;
+
+      return {
+        fps,
+        qrbox: { width: qrSide, height: qrSide }
+      };
+    }
+
+    async function startScanner() {
+      // Prepare HTML Container
+      placeholderScreen.classList.add("hidden");
+      readerEl.classList.remove("hidden");
+      scannerBox.classList.add("active");
+      activeControls.classList.remove("hidden");
+
+      updateStatus("Initializing video stream...", "active");
+
+      if (!scanner) {
+        scanner = new Html5Qrcode("reader");
+      }
+
+      const config = getResponsiveScannerConfig();
+
+      try {
+        // Attempt high quality back camera
+        await scanner.start(
+          { facingMode: "environment" },
+          config,
+          onScanSuccess,
+          () => { }
+        );
+        updateStatus("Secure scanner active. Scan asset QR.", "active");
+      } catch (err) {
         try {
-          // Attempt high quality back camera
+          // Fallback to any active camera
+          const cameras = await Html5Qrcode.getCameras();
+          if (!cameras.length) throw new Error("No cameras detected on this hardware.");
+
           await scanner.start(
-            { facingMode: "environment" },
+            cameras[0].id,
             config,
             onScanSuccess,
-            () => {}
+            () => { }
           );
           updateStatus("Secure scanner active. Scan asset QR.", "active");
-        } catch (err) {
-          try {
-            // Fallback to any active camera
-            const cameras = await Html5Qrcode.getCameras();
-            if (!cameras.length) throw new Error("No cameras detected on this hardware.");
+        } catch (fallbackErr) {
+          const friendlyErr = normalizeStartupError(fallbackErr);
+          showModal("Scanner Error", friendlyErr, false);
+          updateStatus(friendlyErr, "error");
+          stopScanner();
+        }
+      }
+    }
 
-            await scanner.start(
-              cameras[0].id,
-              config,
-              onScanSuccess,
-              () => {}
-            );
-            updateStatus("Secure scanner active. Scan asset QR.", "active");
-          } catch (fallbackErr) {
-            const friendlyErr = normalizeStartupError(fallbackErr);
-            showModal("Scanner Error", friendlyErr, false);
-            updateStatus(friendlyErr, "error");
-            stopScanner();
-          }
+    async function stopScanner() {
+      updateStatus("Shutting down scanner feed...", "inactive");
+
+      if (scanner && scanner.isScanning) {
+        try {
+          await scanner.stop();
+        } catch (e) {
+          console.error("Error stopping scanner stream", e);
         }
       }
 
-      async function stopScanner() {
-        updateStatus("Shutting down scanner feed...", "inactive");
-        
-        if (scanner && scanner.isScanning) {
-          try {
-            await scanner.stop();
-          } catch (e) {
-            console.error("Error stopping scanner stream", e);
-          }
-        }
+      // Reset UI Components
+      placeholderScreen.classList.remove("hidden");
+      readerEl.classList.add("hidden");
+      scannerBox.classList.remove("active");
+      activeControls.classList.add("hidden");
 
-        // Reset UI Components
-        placeholderScreen.classList.remove("hidden");
-        readerEl.classList.add("hidden");
-        scannerBox.classList.remove("active");
-        activeControls.classList.add("hidden");
-        
-        updateStatus("Scanner is inactive.", "inactive");
+      updateStatus("Scanner is inactive.", "inactive");
+    }
+
+    // Action Event Bindings
+    startScanBtn.addEventListener("click", startScanner);
+    stopScanBtn.addEventListener("click", stopScanner);
+
+    closeModalBtn.addEventListener("click", () => {
+      hideModal();
+      if (scanner && scanner.isScanning) {
+        updateStatus("Secure scanner active. Scan asset QR.", "active");
       }
+    });
 
-      // Action Event Bindings
-      startScanBtn.addEventListener("click", startScanner);
-      stopScanBtn.addEventListener("click", stopScanner);
-
-      closeModalBtn.addEventListener("click", () => {
+    modalEl.addEventListener("click", (event) => {
+      if (event.target === modalEl) {
         hideModal();
         if (scanner && scanner.isScanning) {
           updateStatus("Secure scanner active. Scan asset QR.", "active");
         }
-      });
+      }
+    });
+  </script>
+</body>
 
-      modalEl.addEventListener("click", (event) => {
-        if (event.target === modalEl) {
-          hideModal();
-          if (scanner && scanner.isScanning) {
-            updateStatus("Secure scanner active. Scan asset QR.", "active");
-          }
-        }
-      });
-    </script>
-  </body>
 </html>
