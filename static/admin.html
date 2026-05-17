@@ -1449,10 +1449,10 @@
                   </div>
                 </div>
                 <div>
-                  <button type="button" class="btn btn-ghost btn-sm" style="display: inline-flex; align-items: center; color: var(--blue-600); font-weight: 500;" onclick="fetch('/static/asset_template.xlsx').then(r => r.blob()).then(blob => { const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'asset_template.xlsx'; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); })">
+                  <a href="/api/template" class="btn btn-ghost btn-sm" style="display: inline-flex; align-items: center; text-decoration: none; color: var(--blue-600); font-weight: 500;">
                     <i data-lucide="download" style="width:14px;height:14px; margin-right:4px;"></i>
                     Download Template
-                  </button>
+                  </a>
                 </div>
               </div>
 

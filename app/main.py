@@ -6,7 +6,7 @@ from pathlib import Path
 
 from fastapi import Depends, FastAPI, HTTPException, Header, Query
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from jose import JWTError, jwt
 from sqlalchemy import select, delete
@@ -381,6 +381,19 @@ def delete_asset(
     return AssetDeleteResponse(
         message="Asset deleted successfully.",
         public_id=public_id,
+    )
+
+
+@app.get("/api/template")
+def download_template():
+    template_path = STATIC_DIR / "asset_template.xlsx"
+    if not template_path.exists():
+        raise HTTPException(status_code=404, detail="Template not found")
+    return FileResponse(
+        path=template_path,
+        filename="asset_template.xlsx",
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": 'attachment; filename="asset_template.xlsx"'}
     )
 
 
