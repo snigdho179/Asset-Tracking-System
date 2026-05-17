@@ -3,339 +3,604 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Asset QR Scanner</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Asset QR Scanner — Verification Portal</title>
+    <meta name="description" content="Secure asset scanner and QR code verification portal." />
+    <!-- Load library and icons -->
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Sora:wght@400;500;600;700;800&display=swap"
-      rel="stylesheet"
-    />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+
     <style>
+      /* ═══════════════════════════════════════════════════════════════
+         DESIGN SYSTEM — CSS Custom Properties (Matched with admin.html)
+         ═══════════════════════════════════════════════════════════════ */
       :root {
-        --ink: #0f172a;
-        --muted: #64748b;
-        --surface: #ffffff;
-        --surface-soft: #f8fafc;
-        --stroke: #dbe3ee;
-        --primary: #1d4ed8;
+        --blue-50: #eff6ff;
+        --blue-100: #dbeafe;
+        --blue-200: #bfdbfe;
+        --blue-500: #3b82f6;
+        --blue-600: #2563eb;
+        --blue-700: #1d4ed8;
+        --blue-800: #1e40af;
+        --blue-900: #1e3a8a;
+
+        --slate-50: #f8fafc;
+        --slate-100: #f1f5f9;
+        --slate-200: #e2e8f0;
+        --slate-300: #cbd5e1;
+        --slate-400: #94a3b8;
+        --slate-500: #64748b;
+        --slate-600: #475569;
+        --slate-700: #334155;
+        --slate-800: #1e293b;
+        --slate-900: #0f172a;
+
+        --emerald-50: #ecfdf5;
+        --emerald-100: #d1fae5;
+        --emerald-500: #10b981;
+        --emerald-600: #059669;
+        --emerald-700: #047857;
+
+        --rose-50: #fff1f2;
+        --rose-100: #ffe4e6;
+        --rose-500: #f43f5e;
+        --rose-600: #e11d48;
+        --rose-700: #be123c;
+
+        --bg-body: var(--slate-50);
+        --bg-card: #ffffff;
+        --border-color: var(--slate-200);
+
+        --text-primary: var(--slate-900);
+        --text-secondary: var(--slate-600);
+        --text-tertiary: var(--slate-400);
+
+        --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+        --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.06), 0 2px 4px -2px rgba(0,0,0,0.06);
+        --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.07), 0 4px 6px -4px rgba(0,0,0,0.07);
+        --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.08), 0 8px 10px -6px rgba(0,0,0,0.06);
+
+        --radius-sm: 8px;
+        --radius-md: 12px;
+        --radius-lg: 16px;
+        --radius-xl: 20px;
+        --radius-full: 9999px;
+
+        --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+        --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
       }
+
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
       body {
-        font-family: "Sora", sans-serif;
-        color: var(--ink);
-        background:
-          radial-gradient(1000px 600px at -10% -25%, #eaf2ff 0%, rgba(234, 242, 255, 0) 65%),
-          radial-gradient(760px 440px at 108% 0%, #f1f5f9 0%, rgba(241, 245, 249, 0) 58%),
-          #ffffff;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        background: linear-gradient(135deg, var(--slate-900) 0%, #111827 100%);
+        color: #ffffff;
+        line-height: 1.6;
         min-height: 100vh;
-      }
-
-      .mono {
-        font-family: "IBM Plex Mono", monospace;
-      }
-
-      .orb {
-        pointer-events: none;
-        position: fixed;
-        border-radius: 9999px;
-        filter: blur(42px);
-        opacity: 0.56;
-      }
-
-      .orb-a {
-        top: 3rem;
-        right: -8rem;
-        height: 14rem;
-        width: 14rem;
-        background: #dbeafe;
-      }
-
-      .orb-b {
-        bottom: 1rem;
-        left: -7rem;
-        height: 11rem;
-        width: 11rem;
-        background: #e2e8f0;
-      }
-
-      .info-card,
-      .scanner-card {
-        border-radius: 24px;
-        border: 1px solid var(--stroke);
-        background: rgba(255, 255, 255, 0.92);
-        box-shadow: 0 22px 45px rgba(15, 23, 42, 0.08);
-      }
-
-      .kicker {
-        font-size: 0.7rem;
-        font-weight: 700;
-        letter-spacing: 0.2em;
-        text-transform: uppercase;
-        color: #64748b;
-      }
-
-      .headline {
-        font-size: clamp(1.55rem, 3vw, 2.2rem);
-        font-weight: 800;
-        line-height: 1.2;
-      }
-
-      .subline {
-        margin-top: 0.6rem;
-        color: #475569;
-        font-size: 0.92rem;
-        line-height: 1.7;
-      }
-
-      .detail-chip {
-        display: inline-flex;
+        -webkit-font-smoothing: antialiased;
+        display: flex;
+        flex-direction: column;
         align-items: center;
-        gap: 0.45rem;
-        border-radius: 9999px;
-        border: 1px solid #cbd5e1;
-        background: #ffffff;
-        padding: 0.38rem 0.76rem;
-        font-size: 0.72rem;
+        justify-content: center;
+        padding: 24px;
+        position: relative;
+        overflow-x: hidden;
+      }
+
+      .bg-glow {
+        position: absolute;
+        top: -10%;
+        left: -10%;
+        width: 60%;
+        height: 60%;
+        background: radial-gradient(circle, rgba(37,99,235,0.15) 0%, transparent 70%);
+        pointer-events: none;
+        z-index: 1;
+      }
+
+      .bg-glow-right {
+        position: absolute;
+        bottom: -10%;
+        right: -10%;
+        width: 60%;
+        height: 60%;
+        background: radial-gradient(circle, rgba(16,185,129,0.08) 0%, transparent 70%);
+        pointer-events: none;
+        z-index: 1;
+      }
+
+      .mono { font-family: 'IBM Plex Mono', monospace; }
+
+      /* Container */
+      .app-container {
+        width: 100%;
+        max-width: 480px;
+        z-index: 2;
+        animation: fadeIn 0.5s ease-out;
+      }
+
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(15px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      /* Card (Admin-style matching) */
+      .card {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: var(--radius-xl);
+        padding: 32px;
+        box-shadow: var(--shadow-xl), 0 0 40px rgba(0,0,0,0.3);
+        margin-top: 16px;
+      }
+
+      .brand-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        justify-content: center;
+        margin-bottom: 24px;
+      }
+
+      .brand-logo {
+        width: 42px;
+        height: 42px;
+        background: linear-gradient(135deg, var(--blue-500), var(--blue-700));
+        border-radius: var(--radius-md);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px rgba(37,99,235,0.3);
+      }
+
+      .brand-logo svg { color: white; width: 22px; height: 22px; }
+
+      .brand-text h1 {
+        font-size: 20px;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        background: linear-gradient(120deg, #ffffff, var(--slate-300));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .brand-text p {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        color: var(--blue-400);
         font-weight: 700;
-        color: #334155;
       }
 
-      #reader {
-        width: min(92vw, 420px);
-        border-radius: 18px;
-        overflow: hidden;
-        border: 1px solid #dbe3ee;
-        background: #ffffff;
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+      .card-title {
+        font-size: 18px;
+        font-weight: 700;
+        margin-bottom: 8px;
+        color: #ffffff;
       }
 
-      #reader video {
-        border-radius: 14px;
+      .card-description {
+        font-size: 13px;
+        color: var(--slate-400);
+        margin-bottom: 24px;
+        line-height: 1.5;
       }
 
-      #reader__dashboard {
-        padding: 0.75rem;
-        border-top: 1px solid #e2e8f0;
-        background: #f8fafc;
-      }
-
-      #reader button {
-        border-radius: 11px;
-        border: 1px solid #d6e0ea;
-        background: #ffffff;
-        color: #334155;
-        font-size: 0.8rem;
-        font-weight: 600;
-        padding: 0.4rem 0.7rem;
-        transition: all 140ms ease;
-      }
-
-      #reader button:hover {
-        background: #f1f5f9;
-      }
-
-      #reader select,
-      #reader input {
-        border-radius: 11px;
-        border: 1px solid #d6e0ea;
-        background: #ffffff;
-        padding: 0.38rem 0.65rem;
-        font-size: 0.82rem;
-        color: #334155;
-      }
-
-      .status-chip {
+      /* Buttons */
+      .btn {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        border-radius: 9999px;
-        border: 1px solid transparent;
-        padding: 0.46rem 0.84rem;
-        text-align: center;
-        font-size: 0.81rem;
+        gap: 8px;
+        padding: 12px 24px;
+        font-size: 14px;
         font-weight: 600;
+        border-radius: var(--radius-md);
+        border: 1px solid transparent;
+        cursor: pointer;
+        transition: all var(--transition-fast);
+        width: 100%;
       }
 
-      .status-ok {
-        border-color: #bfdbfe;
-        background: #eff6ff;
-        color: #1e40af;
+      .btn-primary {
+        background: var(--blue-600);
+        color: #ffffff;
+        box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
       }
 
-      .status-error {
-        border-color: #fecaca;
-        background: #fef2f2;
-        color: #b91c1c;
+      .btn-primary:hover {
+        background: var(--blue-700);
+        transform: translateY(-1px);
+        box-shadow: 0 6px 18px rgba(37, 99, 235, 0.5);
       }
 
-      .modal-panel {
-        border-radius: 22px;
-        border: 1px solid #dbe3ee;
-        background: #ffffff;
-        box-shadow: 0 30px 70px rgba(15, 23, 42, 0.28);
+      .btn-primary:active {
+        transform: translateY(0);
       }
 
-      .modal-tone {
+      .btn-secondary {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(255, 255, 255, 0.12);
+        color: #ffffff;
+      }
+
+      .btn-secondary:hover {
+        background: rgba(255, 255, 255, 0.15);
+      }
+
+      .btn-danger {
+        background: var(--rose-600);
+        color: #ffffff;
+        box-shadow: 0 4px 14px rgba(225, 29, 72, 0.4);
+      }
+
+      .btn-danger:hover {
+        background: var(--rose-700);
+      }
+
+      /* Badges & Chips */
+      .badge {
         display: inline-flex;
         align-items: center;
-        border-radius: 9999px;
-        border: 1px solid transparent;
-        padding: 0.26rem 0.62rem;
-        font-size: 0.72rem;
-        font-weight: 700;
+        gap: 6px;
+        padding: 6px 12px;
+        border-radius: var(--radius-full);
+        font-size: 12px;
+        font-weight: 600;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255,255,255,0.08);
+        color: var(--slate-300);
       }
 
-      .modal-tone-success {
-        border-color: #bbf7d0;
-        background: #f0fdf4;
-        color: #15803d;
-      }
-
-      .modal-tone-error {
-        border-color: #fecaca;
-        background: #fef2f2;
-        color: #b91c1c;
-      }
-
-      .cta-btn {
+      /* Scanner Box & Placeholders */
+      .scanner-wrapper {
+        position: relative;
         width: 100%;
-        border-radius: 14px;
-        border: 1px solid transparent;
-        background: #0f172a;
-        color: #ffffff;
-        padding: 0.65rem 1rem;
-        font-size: 0.88rem;
+        background: rgba(15, 23, 42, 0.6);
+        border-radius: var(--radius-lg);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        overflow: hidden;
+        margin-bottom: 20px;
+        aspect-ratio: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        transition: border-color var(--transition-base);
+      }
+
+      .scanner-wrapper.active {
+        border-color: var(--blue-500);
+        box-shadow: 0 0 25px rgba(59, 130, 246, 0.2);
+      }
+
+      #reader {
+        width: 100% !important;
+        height: 100% !important;
+        border: none !important;
+      }
+
+      #reader video {
+        object-fit: cover !important;
+        width: 100% !important;
+        height: 100% !important;
+      }
+
+      /* Custom Camera Placeholder design */
+      .camera-placeholder {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 32px;
+        z-index: 10;
+        transition: opacity var(--transition-fast);
+      }
+
+      .camera-placeholder.hidden {
+        display: none;
+      }
+
+      .placeholder-icon {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: rgba(59, 130, 246, 0.1);
+        border: 1px solid rgba(59, 130, 246, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 20px;
+        color: var(--blue-400);
+        animation: pulseGlow 2s infinite ease-in-out;
+      }
+
+      @keyframes pulseGlow {
+        0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.2); }
+        50% { transform: scale(1.05); box-shadow: 0 0 20px 4px rgba(59, 130, 246, 0.25); }
+      }
+
+      .placeholder-title {
+        font-size: 15px;
         font-weight: 700;
-        transition: background 180ms ease;
+        color: #ffffff;
+        margin-bottom: 6px;
       }
 
-      .cta-btn:hover {
+      .placeholder-desc {
+        font-size: 12px;
+        color: var(--slate-400);
+        margin-bottom: 24px;
+        max-width: 240px;
+        line-height: 1.5;
+      }
+
+      /* Live indicator status */
+      .status-bar {
+        width: 100%;
+        background: rgba(255, 255, 255, 0.04);
+        border-radius: var(--radius-md);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        padding: 12px 16px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-top: 16px;
+        font-size: 13px;
+        color: var(--slate-300);
+        transition: all var(--transition-fast);
+      }
+
+      .status-indicator {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--slate-500);
+      }
+
+      .status-bar.active .status-indicator {
+        background: var(--emerald-500);
+        box-shadow: 0 0 10px var(--emerald-500);
+        animation: blink 1.5s infinite;
+      }
+
+      .status-bar.error .status-indicator {
+        background: var(--rose-500);
+        box-shadow: 0 0 10px var(--rose-500);
+      }
+
+      @keyframes blink {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.4; }
+      }
+
+      /* Modal Design System */
+      .modal-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 1000;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        background: rgba(15, 23, 42, 0.8);
+        backdrop-filter: blur(12px);
+        padding: 24px;
+        opacity: 0;
+        transition: opacity var(--transition-base);
+      }
+
+      .modal-overlay.visible {
+        display: flex;
+        opacity: 1;
+      }
+
+      .modal-card {
         background: #1e293b;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: var(--radius-xl);
+        padding: 32px;
+        width: 100%;
+        max-width: 400px;
+        box-shadow: var(--shadow-xl), 0 10px 40px rgba(0,0,0,0.5);
+        transform: scale(0.95);
+        transition: transform var(--transition-base);
+        text-align: center;
       }
 
-      @media (max-width: 900px) {
-        main {
-          max-width: 100%;
-          gap: 1rem;
-        }
-
-        .info-card,
-        .scanner-card {
-          box-shadow: 0 16px 30px rgba(15, 23, 42, 0.08);
-        }
+      .modal-overlay.visible .modal-card {
+        transform: scale(1);
       }
 
-      @media (max-width: 640px) {
-        body {
-          padding: 0.75rem;
-        }
+      .modal-icon {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+      }
 
-        .info-card,
-        .scanner-card {
-          border-radius: 18px;
-          padding: 1rem;
-        }
+      .modal-icon.success {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--emerald-500);
+        border: 1px solid rgba(16, 185, 129, 0.2);
+      }
 
-        #reader {
-          width: min(100%, 360px);
-        }
+      .modal-icon.error {
+        background: rgba(244, 63, 94, 0.1);
+        color: var(--rose-500);
+        border: 1px solid rgba(244, 63, 94, 0.2);
+      }
 
-        #reader__dashboard {
-          padding: 0.65rem;
-        }
+      .modal-title {
+        font-size: 20px;
+        font-weight: 800;
+        margin-bottom: 8px;
+        letter-spacing: -0.01em;
+      }
 
-        .status-chip {
-          width: 100%;
-        }
+      .modal-title.success { color: var(--emerald-500); }
+      .modal-title.error { color: var(--rose-500); }
 
-        .modal-panel {
-          border-radius: 18px;
-          padding: 1rem;
-        }
+      .modal-message {
+        font-size: 14px;
+        color: var(--slate-300);
+        line-height: 1.6;
+        margin-bottom: 24px;
+        word-break: break-all;
+      }
+
+      /* Control Container */
+      .action-container {
+        display: flex;
+        gap: 12px;
+        width: 100%;
+      }
+
+      .hidden {
+        display: none !important;
       }
     </style>
   </head>
-  <body class="relative overflow-x-hidden px-4 py-8 sm:px-8 lg:py-10">
-    <div class="orb orb-a"></div>
-    <div class="orb orb-b"></div>
+  <body>
+    <div class="bg-glow"></div>
+    <div class="bg-glow-right"></div>
 
-    <main class="relative mx-auto flex min-h-[86vh] w-full max-w-5xl flex-col gap-6 lg:flex-row lg:items-center">
-      <section class="info-card w-full p-6 sm:p-7 lg:max-w-md">
-        <p class="kicker">Verification Portal</p>
-        <h1 class="headline mt-2">Asset QR Authentication</h1>
-        <p class="subline">Point your camera at an encrypted asset QR code to verify authenticity in real time.</p>
-
-        <div class="mt-5 flex flex-wrap gap-2">
-          <span class="detail-chip">Encrypted Payload</span>
-          <span class="detail-chip">Server-Side Verification</span>
-          <span class="detail-chip">Tamper Detection</span>
+    <div class="app-container">
+      <!-- Header -->
+      <header class="brand-header">
+        <div class="brand-logo">
+          <i data-lucide="shield-check"></i>
         </div>
-      </section>
+        <div class="brand-text">
+          <h1>Asset Tracker</h1>
+          <p>Secure Verification Portal</p>
+        </div>
+      </header>
 
-      <section class="scanner-card w-full p-5 sm:p-7">
-        <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
-          <h2 class="text-base font-bold text-slate-800">Live Scanner</h2>
-          <span class="rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">Camera Ready</span>
+      <!-- Main Scanner Card -->
+      <main class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+          <h2 class="card-title" style="margin-bottom: 0;">Scan QR Tag</h2>
+          <span class="badge">
+            <i data-lucide="lock" style="width:12px;height:12px;color:var(--blue-400)"></i>
+            AES-256-GCM
+          </span>
+        </div>
+        <p class="card-description">
+          Align the secure QR code within the camera frame to initiate dynamic validation and cryptographic checks.
+        </p>
+
+        <!-- Scanner Box -->
+        <div id="scanner-box" class="scanner-wrapper">
+          <!-- Placeholder Screen -->
+          <div id="placeholder-screen" class="camera-placeholder">
+            <div class="placeholder-icon">
+              <i data-lucide="camera" style="width: 36px; height: 36px;"></i>
+            </div>
+            <h3 class="placeholder-title">Camera Scanner Offline</h3>
+            <p class="placeholder-desc">To verify secure QR tags, grant camera permissions and start scanning.</p>
+            <button id="start-scan-btn" type="button" class="btn btn-primary">
+              <i data-lucide="play" style="width: 16px; height: 16px;"></i>
+              Start Scanner
+            </button>
+          </div>
+
+          <!-- HTML5 Scanner Container (Hidden initially) -->
+          <div id="reader" class="hidden"></div>
         </div>
 
-        <div class="flex flex-col items-center">
-          <div id="reader"></div>
-          <p id="status" class="status-chip status-ok mt-4">Initializing secure scanner...</p>
+        <!-- Stop Button (Hidden initially) -->
+        <div id="active-controls" class="action-container hidden">
+          <button id="stop-scan-btn" type="button" class="btn btn-secondary">
+            <i data-lucide="square" style="width:16px;height:16px;color:var(--rose-500);"></i>
+            Stop Camera Feed
+          </button>
         </div>
-      </section>
-    </main>
 
-    <div id="modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/45 px-4 backdrop-blur-sm">
-      <div class="modal-panel w-full max-w-md p-6">
-        <div class="mb-2 flex items-center gap-2">
-          <span id="modal-tone" class="modal-tone modal-tone-success">Verified</span>
-          <h2 id="modal-title" class="text-lg font-bold text-slate-900"></h2>
+        <!-- Status Message Block -->
+        <div id="status-bar" class="status-bar">
+          <div class="status-indicator"></div>
+          <span id="status-text">Scanner is inactive.</span>
         </div>
-        <p id="modal-message" class="mono mt-3 break-all text-sm text-slate-700"></p>
-        <button id="close-modal" class="cta-btn mt-6">Continue Scanning</button>
+      </main>
+    </div>
+
+    <!-- Feedback Modal -->
+    <div id="modal" class="modal-overlay">
+      <div class="modal-card">
+        <div id="modal-icon" class="modal-icon success">
+          <i id="modal-icon-symbol" data-lucide="check-circle" style="width: 32px; height: 32px;"></i>
+        </div>
+        <h3 id="modal-title" class="modal-title success">Verified</h3>
+        <p id="modal-message" class="modal-message mono"></p>
+        <button id="close-modal" type="button" class="btn btn-primary">
+          Continue Verification
+        </button>
       </div>
     </div>
 
     <script>
-      const statusEl = document.getElementById("status");
+      // DOM References
+      const startScanBtn = document.getElementById("start-scan-btn");
+      const stopScanBtn = document.getElementById("stop-scan-btn");
+      const placeholderScreen = document.getElementById("placeholder-screen");
+      const readerEl = document.getElementById("reader");
+      const scannerBox = document.getElementById("scanner-box");
+      const activeControls = document.getElementById("active-controls");
+      const statusBar = document.getElementById("status-bar");
+      const statusText = document.getElementById("status-text");
+
       const modalEl = document.getElementById("modal");
-      const modalToneEl = document.getElementById("modal-tone");
+      const modalIcon = document.getElementById("modal-icon");
+      const modalIconSymbol = document.getElementById("modal-icon-symbol");
       const modalTitleEl = document.getElementById("modal-title");
       const modalMessageEl = document.getElementById("modal-message");
       const closeModalBtn = document.getElementById("close-modal");
 
-      const scanner = new Html5Qrcode("reader");
+      let scanner = null;
       let isVerifying = false;
       let lastScanValue = "";
       let lastScanAt = 0;
       let userLocation = null;
 
-      function setStatus(message, isError = false) {
-        statusEl.textContent = message;
-        statusEl.classList.toggle("status-error", isError);
-        statusEl.classList.toggle("status-ok", !isError);
+      // Initialize Lucide Icons
+      lucide.createIcons();
+
+      function updateStatus(message, state = "inactive") {
+        statusText.textContent = message;
+        statusBar.className = "status-bar";
+        
+        if (state === "active") {
+          statusBar.classList.add("active");
+        } else if (state === "error") {
+          statusBar.classList.add("error");
+        }
       }
 
       function showModal(title, message, isSuccess) {
         modalTitleEl.textContent = title;
         modalMessageEl.textContent = message;
 
-        modalToneEl.textContent = isSuccess ? "Verified" : "Warning";
-        modalToneEl.classList.toggle("modal-tone-success", isSuccess);
-        modalToneEl.classList.toggle("modal-tone-error", !isSuccess);
+        modalTitleEl.className = "modal-title " + (isSuccess ? "success" : "error");
+        modalIcon.className = "modal-icon " + (isSuccess ? "success" : "error");
+        
+        // Update Modal Symbol Icon
+        modalIconSymbol.setAttribute("data-lucide", isSuccess ? "check-circle" : "alert-triangle");
+        lucide.createIcons();
 
-        modalTitleEl.classList.toggle("text-emerald-700", isSuccess);
-        modalTitleEl.classList.toggle("text-rose-700", !isSuccess);
-
-        modalEl.classList.remove("hidden");
-        modalEl.classList.add("flex");
+        modalEl.classList.add("visible");
       }
 
       function hideModal() {
-        modalEl.classList.add("hidden");
-        modalEl.classList.remove("flex");
+        modalEl.classList.remove("visible");
       }
 
       function captureCurrentLocation() {
@@ -358,7 +623,7 @@
                 reject(new Error("Location access is required to verify this QR."));
                 return;
               }
-              reject(new Error("Unable to retrieve current location. Please enable location services and retry."));
+              reject(new Error("Unable to retrieve location. Please enable GPS."));
             },
             { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
           );
@@ -399,14 +664,14 @@
         const lowered = message.toLowerCase();
 
         if (lowered.includes("outside the authorized scanning zone") || lowered.includes("outside the area")) {
-          return "Outside the area.";
+          return "Access Blocked: Target asset geofence violation.";
         }
 
         if (lowered.includes("maximum scanning limit reached") || lowered.includes("invalid qr")) {
-          return "Invalid QR.";
+          return "Revoked QR: Maximum scans exceeded or key mismatch.";
         }
 
-        return message || "Security warning triggered.";
+        return message || "Security Warning: Invalid signature.";
       }
 
       function normalizeStartupError(error) {
@@ -414,25 +679,19 @@
         const lowered = message.toLowerCase();
 
         if (!window.isSecureContext && location.hostname !== "localhost" && location.hostname !== "127.0.0.1") {
-          return "Camera and location permissions require HTTPS or localhost.";
+          return "Camera access blocked. Requires HTTPS connection.";
         }
 
         if (lowered.includes("permission") || lowered.includes("notallowederror") || lowered.includes("denied")) {
-          return "Camera permission denied. Please allow camera access and retry.";
+          return "Camera access blocked. Please adjust your browser permissions.";
         }
 
-        if (lowered.includes("secure") || lowered.includes("https")) {
-          return "Camera access requires HTTPS or localhost.";
-        }
-
-        return message || "Unable to start camera scanner.";
+        return message || "Could not load video input stream.";
       }
 
       async function onScanSuccess(decodedText) {
         const now = Date.now();
-        if (isVerifying) {
-          return;
-        }
+        if (isVerifying) return;
 
         if (decodedText === lastScanValue && now - lastScanAt < 3000) {
           return;
@@ -443,30 +702,27 @@
         lastScanAt = now;
 
         try {
-          setStatus("Encrypted payload captured. Verifying with location...");
+          updateStatus("Signature captured. Verifying geolocation...", "active");
           const location = await ensureFreshLocation();
           const payload = await verifyEncryptedBlob(decodedText, location);
-          showModal("Success", `Actual ID: ${payload.original_id}`, true);
-          setStatus("Verified. Ready for next asset.");
+          
+          showModal("Authorized Access", `Decrypted ID: ${payload.original_id}`, true);
+          updateStatus("Signature verified successfully.", "active");
         } catch (error) {
           const userMessage = normalizeVerificationErrorMessage(error && error.message);
-          showModal("Security Warning", userMessage, false);
-          setStatus(userMessage, true);
+          showModal("Security Block", userMessage, false);
+          updateStatus(userMessage, "error");
         } finally {
           setTimeout(() => {
             isVerifying = false;
-          }, 1200);
+          }, 1500);
         }
-      }
-
-      function onScanFailure() {
-        return;
       }
 
       function getResponsiveScannerConfig() {
         const base = Math.min(window.innerWidth, window.innerHeight);
-        const qrSide = Math.max(180, Math.min(300, Math.floor(base * 0.42)));
-        const fps = window.innerWidth < 640 ? 8 : 10;
+        const qrSide = Math.max(180, Math.min(280, Math.floor(base * 0.5)));
+        const fps = window.innerWidth < 640 ? 10 : 12;
 
         return {
           fps,
@@ -474,77 +730,91 @@
         };
       }
 
-      async function startScannerWithFallback() {
-        const scannerConfig = getResponsiveScannerConfig();
+      async function startScanner() {
+        // Prepare HTML Container
+        placeholderScreen.classList.add("hidden");
+        readerEl.classList.remove("hidden");
+        scannerBox.classList.add("active");
+        activeControls.classList.remove("hidden");
+
+        updateStatus("Initializing video stream...", "active");
+
+        if (!scanner) {
+          scanner = new Html5Qrcode("reader");
+        }
+
+        const config = getResponsiveScannerConfig();
 
         try {
+          // Attempt high quality back camera
           await scanner.start(
             { facingMode: "environment" },
-            scannerConfig,
+            config,
             onScanSuccess,
-            onScanFailure
+            () => {}
           );
-          setStatus("Camera active. Scan an encrypted QR code.");
-        } catch (primaryError) {
+          updateStatus("Secure scanner active. Scan asset QR.", "active");
+        } catch (err) {
           try {
+            // Fallback to any active camera
             const cameras = await Html5Qrcode.getCameras();
-            if (!cameras.length) {
-              throw new Error("No camera found on this device.");
-            }
+            if (!cameras.length) throw new Error("No cameras detected on this hardware.");
 
             await scanner.start(
               cameras[0].id,
-              scannerConfig,
+              config,
               onScanSuccess,
-              onScanFailure
+              () => {}
             );
-            setStatus("Camera active. Scan an encrypted QR code.");
-          } catch (fallbackError) {
-            const startupMessage = normalizeStartupError(fallbackError);
-            showModal("Camera Error", startupMessage, false);
-            setStatus(startupMessage, true);
+            updateStatus("Secure scanner active. Scan asset QR.", "active");
+          } catch (fallbackErr) {
+            const friendlyErr = normalizeStartupError(fallbackErr);
+            showModal("Scanner Error", friendlyErr, false);
+            updateStatus(friendlyErr, "error");
+            stopScanner();
           }
         }
       }
 
-      async function initializeScanner() {
-        if (!window.isSecureContext && location.hostname !== "localhost" && location.hostname !== "127.0.0.1") {
-          const secureContextMessage = "Camera and location permissions require HTTPS or localhost.";
-          showModal("Secure Context Required", secureContextMessage, false);
-          setStatus(secureContextMessage, true);
-          return;
+      async function stopScanner() {
+        updateStatus("Shutting down scanner feed...", "inactive");
+        
+        if (scanner && scanner.isScanning) {
+          try {
+            await scanner.stop();
+          } catch (e) {
+            console.error("Error stopping scanner stream", e);
+          }
         }
 
-        await startScannerWithFallback();
-
-        try {
-          setStatus("Requesting location permission...");
-          userLocation = await captureCurrentLocation();
-          setStatus("Camera active. Scan an encrypted QR code.");
-        } catch (error) {
-          const message = error.message || "Location permission not granted. Enable location to verify QRs.";
-          showModal("Location Required", message, false);
-          setStatus("Camera active. Location will be requested when verifying.", false);
-        }
+        // Reset UI Components
+        placeholderScreen.classList.remove("hidden");
+        readerEl.classList.add("hidden");
+        scannerBox.classList.remove("active");
+        activeControls.classList.add("hidden");
+        
+        updateStatus("Scanner is inactive.", "inactive");
       }
+
+      // Action Event Bindings
+      startScanBtn.addEventListener("click", startScanner);
+      stopScanBtn.addEventListener("click", stopScanner);
 
       closeModalBtn.addEventListener("click", () => {
         hideModal();
-        if (userLocation) {
-          setStatus("Camera active. Scan an encrypted QR code.");
+        if (scanner && scanner.isScanning) {
+          updateStatus("Secure scanner active. Scan asset QR.", "active");
         }
       });
 
       modalEl.addEventListener("click", (event) => {
         if (event.target === modalEl) {
           hideModal();
-          if (userLocation) {
-            setStatus("Camera active. Scan an encrypted QR code.");
+          if (scanner && scanner.isScanning) {
+            updateStatus("Secure scanner active. Scan asset QR.", "active");
           }
         }
       });
-
-      initializeScanner();
     </script>
   </body>
 </html>
