@@ -318,8 +318,7 @@ function updateGenerateState() {
   const ids = collectIds();
   idCount.textContent = ids.length + " ID(s) ready";
 
-  const hasMasterKey = masterKeyInput.value.trim().length >= 8;
-  generateBtn.disabled = state.loading || !hasMasterKey || ids.length === 0;
+  generateBtn.disabled = state.loading || ids.length === 0;
 }
 
 function normalizeRowInput(rowData) {
