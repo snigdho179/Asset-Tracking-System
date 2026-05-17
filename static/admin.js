@@ -74,6 +74,7 @@ const banner        = document.getElementById("banner");
 const resultsSection = document.getElementById("results-section");
 const resultsBody   = document.getElementById("results-body");
 const downloadAllPdfBtn = document.getElementById("download-all-pdf-btn");
+const downloadSourcePdfBtn = document.getElementById("download-source-pdf-btn");
 
 // Modal
 const qrModal       = document.getElementById("qr-modal");
@@ -787,6 +788,27 @@ function safeFileName(val) {
   return String(val).trim().replace(/[^a-zA-Z0-9_-]+/g, "-") || "asset-tag";
 }
 
+function uniqueValues(values) {
+  const seen = new Set();
+  return values.filter((value) => {
+    if (seen.has(value)) return false;
+    seen.add(value);
+    return true;
+  });
+}
+
+async function fetchAssetsByIds(ids) {
+  const response = await fetch("/api/assets/lookup", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify({ ids }),
+  });
+
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(payload.detail || "Asset lookup failed.");
+  return payload;
+}
+
 async function downloadAssetTag(item) {
   const imageData = await imageToDataUrl(item.qr_path);
   const { jsPDF } = window.jspdf;
@@ -1347,6 +1369,57 @@ downloadAllPdfBtn.addEventListener("click", async () => {
     lucide.createIcons();
   }
 });
+
+if (downloadSourcePdfBtn) {
+  downloadSourcePdfBtn.addEventListener("click", async () => {
+    showBanner();
+
+    const rawIds = collectIds();
+    if (!rawIds.length) {
+      showBanner("No asset id found.", "error");
+      return;
+    }
+
+    const uniqueIds = uniqueValues(rawIds);
+    const originalLabel = downloadSourcePdfBtn.innerHTML;
+    downloadSourcePdfBtn.disabled = true;
+    downloadSourcePdfBtn.textContent = "Preparing PDF...";
+
+    try {
+      const lookup = await fetchAssetsByIds(uniqueIds);
+      const items = Array.isArray(lookup.items) ? lookup.items : [];
+      const missing = Array.isArray(lookup.missing_ids)
+        ? lookup.missing_ids
+        : uniqueIds.filter((id) => !items.some((item) => item.original_id === id));
+
+      if (missing.length) {
+        const missingMessage = missing.map((id) => id + " id is not in the data base.").join(" ");
+        showBanner(missingMessage, "error");
+        return;
+      }
+
+      const itemMap = new Map(items.map((item) => [item.original_id, item]));
+      const orderedItems = rawIds.map((id) => itemMap.get(id)).filter(Boolean);
+
+      if (!orderedItems.length) {
+        showBanner("No asset id found.", "error");
+        return;
+      }
+
+      await downloadAllAssetTagsPdf(orderedItems);
+      showBanner(
+        "Batch PDF downloaded: " + orderedItems.length + " QR(s), 6 per page.",
+        "success"
+      );
+    } catch (err) {
+      showBanner(err.message || "Batch PDF generation failed.", "error");
+    } finally {
+      downloadSourcePdfBtn.disabled = false;
+      downloadSourcePdfBtn.innerHTML = originalLabel;
+      lucide.createIcons();
+    }
+  });
+}
 
 resultsBody.addEventListener("click", async (e) => {
   const btn = e.target.closest("button[data-action]");

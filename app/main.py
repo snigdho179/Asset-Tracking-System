@@ -19,6 +19,9 @@ from .models import AdminUser, AssetRecord
 from .qr_utils import save_qr_image
 from .schemas import (
     AssetDeleteResponse,
+    AssetLookupItem,
+    AssetLookupRequest,
+    AssetLookupResponse,
     AssetManagerItem,
     AssetManagerListResponse,
     AssetUpdateRequest,
@@ -294,6 +297,42 @@ def list_assets(
             for record in records
         ]
     )
+
+
+@app.post("/api/assets/lookup", response_model=AssetLookupResponse)
+def lookup_assets(
+    payload: AssetLookupRequest,
+    _: AdminUser = Depends(_get_current_user),
+    db: Session = Depends(get_db),
+) -> AssetLookupResponse:
+    requested_ids = payload.ids
+
+    try:
+        records = db.execute(
+            select(AssetRecord).where(AssetRecord.original_id.in_(requested_ids))
+        ).scalars().all()
+    except SQLAlchemyError as exc:
+        raise HTTPException(status_code=500, detail="Database error while loading assets.") from exc
+
+    found_by_id = {record.original_id: record for record in records}
+    missing_ids: list[str] = []
+    seen_missing: set[str] = set()
+
+    for original_id in requested_ids:
+        if original_id not in found_by_id and original_id not in seen_missing:
+            missing_ids.append(original_id)
+            seen_missing.add(original_id)
+
+    items = [
+        AssetLookupItem(
+            public_id=record.public_id,
+            original_id=record.original_id,
+            qr_path=f"/static/qrs/{record.public_id}.png",
+        )
+        for record in records
+    ]
+
+    return AssetLookupResponse(items=items, missing_ids=missing_ids)
 
 
 @app.put("/api/assets/{public_id}", response_model=AssetUpdateResponse)

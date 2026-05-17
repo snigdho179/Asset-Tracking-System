@@ -100,6 +100,36 @@ class AssetManagerListResponse(BaseModel):
     items: list[AssetManagerItem]
 
 
+class AssetLookupRequest(BaseModel):
+    ids: list[str] = Field(..., description="Asset IDs to lookup")
+
+    @field_validator("ids")
+    @classmethod
+    def validate_ids(cls, value: list[str]) -> list[str]:
+        cleaned: list[str] = []
+
+        for item in value:
+            if not isinstance(item, str) or not item.strip():
+                raise ValueError("Every ID must be a non-empty string.")
+            cleaned.append(item.strip())
+
+        if not cleaned:
+            raise ValueError("No asset id found.")
+
+        return cleaned
+
+
+class AssetLookupItem(BaseModel):
+    public_id: str
+    original_id: str
+    qr_path: str
+
+
+class AssetLookupResponse(BaseModel):
+    items: list[AssetLookupItem]
+    missing_ids: list[str]
+
+
 class AssetUpdateRequest(BaseModel):
     max_scans: int = Field(..., ge=1, description="Updated maximum allowed successful scans")
 

@@ -1106,6 +1106,11 @@
       .mt-4 { margin-top: 16px; }
       .mb-2 { margin-bottom: 8px; }
       .gap-3 { gap: 12px; }
+      .id-source-actions {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 16px;
+      }
 
       /* ═══════════════════════════════════════════════════════════════
          MOBILE NAV
@@ -1294,6 +1299,10 @@
         .modal-image-wrapper img {
           width: min(70vw, 240px);
           height: min(70vw, 240px);
+        }
+
+        .id-source-actions .btn {
+          width: 100%;
         }
       }
 
@@ -1504,6 +1513,13 @@
                   <input id="file-input" type="file" accept=".xlsx,.xls,.csv" class="hidden" />
                 </div>
                 <p id="file-feedback" style="font-size:13px; color:var(--text-secondary); margin-top:8px;"></p>
+              </div>
+
+              <div class="id-source-actions">
+                <button id="download-source-pdf-btn" type="button" class="btn btn-primary btn-sm">
+                  <i data-lucide="file-down" style="width:14px;height:14px"></i>
+                  Download All QRs (PDF)
+                </button>
               </div>
             </div>
 
