@@ -234,6 +234,7 @@ def ingest_assets(payload: IngestRequest, db: Session = Depends(get_db)) -> Inge
             record = AssetRecord(
                 public_id=public_id,
                 original_id=item.original_id,
+                description=item.description,
                 encrypted_blob=encrypted_blob,
                 secret_key=secret_key,
                 nonce=nonce,

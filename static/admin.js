@@ -9,6 +9,7 @@ const STORAGE_VALUE  = "ats.master_key";
 
 const COLUMN_ALIASES = {
   original_id:   ["id", "asset id", "asset_id", "original id", "original_id"],
+  description:   ["description", "desc", "asset description", "asset_desc"],
   max_scans:     ["max scans", "max_scans", "maximum scans", "scan limit"],
   lat:           ["lat", "latitude"],
   lon:           ["lon", "lng", "longitude", "long"],
@@ -16,6 +17,15 @@ const COLUMN_ALIASES = {
 };
 
 const DEFAULT_COLUMN_INDEXES = {
+  original_id: 0,
+  description: 1,
+  max_scans: 2,
+  lat: 3,
+  lon: 4,
+  radius_meters: 5,
+};
+
+const LEGACY_COLUMN_INDEXES = {
   original_id: 0,
   max_scans: 1,
   lat: 2,
@@ -328,6 +338,7 @@ function normalizeRowInput(rowData) {
 
   return {
     original_id: String(source.original_id ?? source.id ?? "").trim(),
+    description: String(source.description ?? source.desc ?? "").trim(),
     max_scans: maxScansValue || "1",
     lat: source.lat == null ? "" : String(source.lat).trim(),
     lon: source.lon == null ? "" : String(source.lon).trim(),
@@ -376,6 +387,17 @@ function createRow(rowData) {
   idInput.placeholder = "ASSET-0001";
   idInput.addEventListener("input", updateGenerateState);
   idCell.appendChild(idInput);
+
+  // Description
+  const descriptionCell = document.createElement("td");
+  descriptionCell.setAttribute("data-label", "Description");
+  const descriptionInput = document.createElement("input");
+  descriptionInput.type = "text";
+  descriptionInput.value = n.description;
+  descriptionInput.setAttribute("data-role", "description");
+  descriptionInput.className = "table-input";
+  descriptionInput.placeholder = "Optional description";
+  descriptionCell.appendChild(descriptionInput);
 
   // Max Scans
   const maxScansCell = document.createElement("td");
@@ -455,6 +477,7 @@ function createRow(rowData) {
   removeBtn.addEventListener("click", () => {
     if (rowsBody.children.length === 1) {
       idInput.value = "";
+      descriptionInput.value = "";
       maxScansInput.value = "1";
       latInput.value = "";
       lonInput.value = "";
@@ -468,7 +491,7 @@ function createRow(rowData) {
   });
   actionCell.appendChild(removeBtn);
 
-  row.append(indexCell, idCell, maxScansCell, geofenceCell, actionCell);
+  row.append(indexCell, idCell, descriptionCell, maxScansCell, geofenceCell, actionCell);
   return row;
 }
 
@@ -536,6 +559,7 @@ function getCellValue(row, index) {
 function mapRawRow(row, indexes) {
   return {
     original_id: getCellValue(row, indexes.original_id),
+    description: getCellValue(row, indexes.description),
     max_scans: getCellValue(row, indexes.max_scans) || "1",
     lat: getCellValue(row, indexes.lat),
     lon: getCellValue(row, indexes.lon),
@@ -549,7 +573,14 @@ function parseRowsFromGrid(rawRows) {
 
   const headerMap = resolveHeaderMap(rows[0]);
   const hasHeader = typeof headerMap.original_id === "number";
-  const indexes = hasHeader ? { ...DEFAULT_COLUMN_INDEXES, ...headerMap } : DEFAULT_COLUMN_INDEXES;
+  let indexes;
+  if (hasHeader) {
+    indexes = headerMap;
+  } else if (rows[0].length <= 5) {
+    indexes = LEGACY_COLUMN_INDEXES;
+  } else {
+    indexes = DEFAULT_COLUMN_INDEXES;
+  }
   const startAt = hasHeader ? 1 : 0;
   const mapped = [];
 
@@ -625,6 +656,8 @@ function collectRecordsForSubmission() {
     const origId = row.querySelector("input[data-role='asset-id']").value.trim();
     if (!origId) return;
 
+    const description = row.querySelector("input[data-role='description']").value.trim();
+
     const maxScans = parseIntDef(row.querySelector("input[data-role='max-scans']").value, 1);
     if (!Number.isInteger(maxScans) || maxScans < 1)
       throw new Error("Row " + (i + 1) + ": Max Scans must be a positive integer.");
@@ -648,6 +681,7 @@ function collectRecordsForSubmission() {
 
     records.push({
       original_id: origId,
+      description: description || null,
       max_scans: maxScans,
       lat: lat,
       lon: lon,

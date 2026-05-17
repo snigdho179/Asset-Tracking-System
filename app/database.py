@@ -40,6 +40,7 @@ def ensure_asset_records_schema() -> None:
         "lat": "lat DECIMAL(10, 8) NULL",
         "lon": "lon DECIMAL(11, 8) NULL",
         "radius_meters": "radius_meters INT NOT NULL DEFAULT 100",
+        "description": "description TEXT NULL",
     }
 
     with engine.begin() as connection:

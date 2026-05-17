@@ -5,6 +5,7 @@ from pydantic import AliasChoices, BaseModel, Field, field_validator, model_vali
 
 class IngestRecord(BaseModel):
     original_id: str = Field(..., description="Asset identifier to encrypt")
+    description: str | None = Field(None, max_length=500, description="Optional asset description")
     max_scans: int = Field(1, ge=1, description="Maximum allowed successful scans")
     lat: float | None = Field(None, ge=-90, le=90, description="Authorized latitude")
     lon: float | None = Field(None, ge=-180, le=180, description="Authorized longitude")
@@ -17,6 +18,14 @@ class IngestRecord(BaseModel):
         if not cleaned:
             raise ValueError("original_id must be a non-empty string.")
         return cleaned
+
+    @field_validator("description")
+    @classmethod
+    def validate_description(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        cleaned = value.strip()
+        return cleaned or None
 
     @model_validator(mode="after")
     def validate_geofence_pair(self) -> "IngestRecord":

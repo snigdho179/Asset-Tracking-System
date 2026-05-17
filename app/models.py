@@ -9,6 +9,7 @@ class AssetRecord(Base):
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     public_id = Column(String(36), unique=True, index=True, nullable=False)
     original_id = Column(Text, nullable=False)
+    description = Column(Text, nullable=True)
     encrypted_blob = Column(Text, nullable=False)
     secret_key = Column(Text, nullable=False)
     nonce = Column(Text, nullable=False)
